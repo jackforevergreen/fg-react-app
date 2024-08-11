@@ -1,0 +1,75 @@
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { Slider } from "@react-native-assets/slider";
+
+const QuestionSlider = ({
+  question,
+  value,
+  onChange,
+  labels,
+  minimumValue,
+  maximumValue,
+}: {
+  question: string;
+  value: number;
+  onChange: (value: number) => void;
+  labels: string[];
+  minimumValue: number;
+  maximumValue: number;
+}) => {
+  return (
+    <View style={styles.container}>
+      <Text style={styles.questionText}>{question}</Text>
+      <View style={styles.sliderContainer}>
+        <Slider
+          minimumValue={minimumValue}
+          maximumValue={maximumValue}
+          step={1}
+          value={value}
+          onValueChange={onChange}
+          minimumTrackTintColor="#8E8F8E"
+          maximumTrackTintColor="#D9D9D9"
+          thumbTintColor="#8E8F8E"
+          trackHeight={9}
+          thumbSize={20}
+          CustomMark={({ value, active }) => (
+            <View style={styles.labelsContainer}>
+              {active ? (
+                <Text style={styles.activeLabel}>{value}</Text>
+              ) : (
+                <Text style={styles.labelText}>{value}</Text>
+              )}
+            </View>
+          )}
+        />
+      </View>
+    </View>
+  );
+};
+
+export default QuestionSlider;
+
+const styles = StyleSheet.create({
+  container: {
+    marginVertical: 32,
+  },
+  questionText: {
+    fontSize: 20,
+    marginTop: 32,
+  },
+  sliderContainer: {
+    marginTop: 16,
+  },
+  labelsContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 64,
+  },
+  labelText: {
+    textAlign: "center",
+  },
+  activeLabel: {
+    fontWeight: "bold",
+  },
+});
