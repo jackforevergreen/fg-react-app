@@ -33,15 +33,12 @@
     },
     "plugins": [
       "expo-router",
-      "@react-native-firebase/app",
-      "@react-native-firebase/auth",
       [
         "expo-image-picker",
         {
           "photosPermission": "The app needs access to your photos to let you choose a profile picture."
         }
       ],
-      "@react-native-firebase/crashlytics",
       [
         "expo-build-properties",
         {

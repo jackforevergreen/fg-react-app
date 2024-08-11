@@ -8,7 +8,7 @@ export default function TabsLayout() {
         headerShown: false,
       }}
     >
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name="carbon-credit"
         options={{
           tabBarLabel: "",
@@ -37,7 +37,7 @@ export default function TabsLayout() {
             <MaterialCommunityIcons name="tree" color={color} size={size} />
           ),
         }}
-      />
+      /> */}
       <Tabs.Screen
         name="home"
         options={{
@@ -54,7 +54,7 @@ export default function TabsLayout() {
         }}
       />
 
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name="learn"
         options={{
           tabBarLabel: "",
@@ -83,7 +83,7 @@ export default function TabsLayout() {
             <MaterialCommunityIcons name="account" color={color} size={size} />
           ),
         }}
-      />
+      /> */}
     </Tabs>
   );
 }

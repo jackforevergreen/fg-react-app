@@ -8,14 +8,14 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { router } from "expo-router";
-import { fetchEmissionsData } from "../../api/emissions";
+// import { fetchEmissionsData } from "../../api/emissions";
 import dayjs from "dayjs";
-import {
-  PieChartBreakdown,
-  BarChartBreakdown,
-  EarthBreakdown,
-  LineChartBreakdown,
-} from "../../components/breakdown";
+// import {
+//   PieChartBreakdown,
+//   BarChartBreakdown,
+//   EarthBreakdown,
+//   LineChartBreakdown,
+// } from "../../components/breakdown";
 
 const TextButton = ({ label, style }: { label: string; style: string }) => (
   <View
@@ -32,20 +32,20 @@ const HomeScreen = () => {
   const [dietEmissions, setDietEmissions] = useState(0.0);
   const [energyEmissions, setEnergyEmissions] = useState(0.0);
 
-  useEffect(() => {
-    const loadData = async () => {
-      const data = await fetchEmissionsData();
-      if (data !== null) {
-        const totalData = data.totalData;
-        setEmissionsPerYear(totalData.totalEmissions);
-        setTransportationEmissions(totalData.transportationEmissions);
-        setDietEmissions(totalData.dietEmissions);
-        setEnergyEmissions(totalData.energyEmissions);
-      }
-    };
+  // useEffect(() => {
+  //   const loadData = async () => {
+  //     const data = await fetchEmissionsData();
+  //     if (data !== null) {
+  //       const totalData = data.totalData;
+  //       setEmissionsPerYear(totalData.totalEmissions);
+  //       setTransportationEmissions(totalData.transportationEmissions);
+  //       setDietEmissions(totalData.dietEmissions);
+  //       setEnergyEmissions(totalData.energyEmissions);
+  //     }
+  //   };
 
-    loadData();
-  }, []);
+  //   loadData();
+  // }, []);
 
   // Generate a list of 6 months ago to now
   const months = [];
@@ -139,7 +139,7 @@ const HomeScreen = () => {
             Your net-zero journey
           </Text>
           <View className="flex-1 items-center justify-center p-4">
-            <LineChartBreakdown />
+            {/* <LineChartBreakdown /> */}
           </View>
           <TouchableOpacity
             className="mt-2.5 bg-[#409858] rounded-full items-center justify-center h-10 w-[150px]"
@@ -213,7 +213,7 @@ const HomeScreen = () => {
           <View className="bg-white rounded-2xl p-4 mb-6">
             <Text className="text-2xl mb-4">Your Breakdown</Text>
             <View className="flex flex-row justify-between align-middle">
-              <PieChartBreakdown
+              {/* <PieChartBreakdown
                 names={["Transportation", "Diet", "Energy"]}
                 values={[
                   transportationEmissions,
@@ -223,7 +223,7 @@ const HomeScreen = () => {
                 colors={["#44945F", "#AEDCA7", "#66A570"]}
                 width={Math.round(width / 3)}
                 height={100}
-              />
+              /> */}
               <View className="flex-col justify-center mb-4 gap-2">
                 <View className="flex-row items-center mr-4">
                   <View
@@ -268,11 +268,11 @@ const HomeScreen = () => {
             <Text className="text-md mb-4">
               See how you rank vs the average American
             </Text>
-            <BarChartBreakdown
+            {/* <BarChartBreakdown
               names={["You", "Average American"]}
               values={[emissionsPerYear, 21]}
               colors={["#44945F", "#A9A9A9"]}
-            />
+            /> */}
           </View>
 
           {/* If everyone lived like you */}
@@ -281,7 +281,7 @@ const HomeScreen = () => {
               If everyone lived like you we'd need{" "}
               {(emissionsPerYear / 6.4).toFixed(2)} Earths
             </Text>
-            <EarthBreakdown emissions={emissionsPerYear} />
+            {/* <EarthBreakdown emissions={emissionsPerYear} /> */}
           </View>
         </View>
       </View>

@@ -2,41 +2,17 @@ import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
-import "react-native-reanimated";
+// import "react-native-reanimated";
 import { PaperProvider } from "react-native-paper";
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { initializeAuth, getReactNativePersistence } from "firebase/auth";
-import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
-import Purchases, { LOG_LEVEL } from "react-native-purchases";
+// import Purchases, { LOG_LEVEL } from "react-native-purchases";
+import Head from "expo-router/head";
 
 // Import your global CSS file
-import "../global.css";
-import { Platform } from "react-native";
-
-// Initialize Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyBIvTUeN-I9FnCgz7d0ybhdWRpwsyFH0_s",
-  authDomain: "fg-react-app.firebaseapp.com",
-  databaseURL: "https://project-id.firebaseio.com",
-  projectId: "fg-react-app",
-  storageBucket: "fg-react-app.appspot.com",
-  messagingSenderId: "489135632905",
-  appId: "1:489135632905:web:20779662c09acf532a3ed8",
-  measurementId: "G-TSS2FD4QBJ",
-};
-
-// Check if Firebase is already initialized
-if (getApps().length === 0) {
-  const app = initializeApp(firebaseConfig);
-  initializeAuth(app, {
-    persistence: getReactNativePersistence(ReactNativeAsyncStorage),
-  });
-} else {
-  getApp();
-}
+// import "../global.css";
+// import { Platform } from "react-native";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+// SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [loaded] = useFonts({
@@ -49,38 +25,43 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
-  useEffect(() => {
-    const setup = async () => {
-      if (Platform.OS === "android") {
-        await Purchases.configure({
-          apiKey: "goog_lNxsUrbWohfeSKDEuwoJGBGtlIy",
-        });
-      } else {
-        await Purchases.configure({
-          apiKey: "appl_ZuRqSmehWozCJjjIbGrcZxQuCpi",
-        });
-      }
-      Purchases.setLogLevel(LOG_LEVEL.DEBUG);
-    };
+  //   useEffect(() => {
+  //     const setup = async () => {
+  //       if (Platform.OS === "android") {
+  //         await Purchases.configure({
+  //           apiKey: "goog_lNxsUrbWohfeSKDEuwoJGBGtlIy",
+  //         });
+  //       } else {
+  //         await Purchases.configure({
+  //           apiKey: "appl_ZuRqSmehWozCJjjIbGrcZxQuCpi",
+  //         });
+  //       }
+  //       Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+  //     };
 
-    setup().catch(console.log);
-  }, []);
+  //     setup().catch(console.log);
+  //   }, []);
 
   if (!loaded) {
     return null;
   }
 
   return (
-    <PaperProvider>
-      <Stack
-        screenOptions={{
-          // Hide the header for all other routes.
-          headerShown: false,
-        }}
-      >
-        <Stack.Screen name="+not-found" />
-        <Stack.Screen name="index" />
-      </Stack>
-    </PaperProvider>
+    <>
+      <Head>
+        <link href="/public/global.css" rel="stylesheet" />
+      </Head>
+      <PaperProvider>
+        <Stack
+          screenOptions={{
+            // Hide the header for all other routes.
+            headerShown: false,
+          }}
+        >
+          <Stack.Screen name="+not-found" />
+          <Stack.Screen name="index" />
+        </Stack>
+      </PaperProvider>
+    </>
   );
 }
