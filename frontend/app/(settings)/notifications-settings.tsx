@@ -1,5 +1,5 @@
-// import UnderConstructionScreen from "../../components/UnderConstruction";
+import UnderConstructionScreen from "../../components/UnderConstruction";
 
-// export default function notificationsSettings() {
-//   return <UnderConstructionScreen />;
-// }
+export default function NotificationsSettings() {
+  return <UnderConstructionScreen />;
+}

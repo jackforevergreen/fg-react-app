@@ -22,7 +22,7 @@ export default function TabsLayout() {
             <MaterialCommunityIcons name="cash" color={color} size={size} />
           ),
         }}
-      />
+      /> */}
       <Tabs.Screen
         name="tree-planting"
         options={{
@@ -37,7 +37,7 @@ export default function TabsLayout() {
             <MaterialCommunityIcons name="tree" color={color} size={size} />
           ),
         }}
-      /> */}
+      />
       <Tabs.Screen
         name="home"
         options={{
@@ -53,8 +53,7 @@ export default function TabsLayout() {
           ),
         }}
       />
-
-      {/* <Tabs.Screen
+      <Tabs.Screen
         name="learn"
         options={{
           tabBarLabel: "",
@@ -83,7 +82,7 @@ export default function TabsLayout() {
             <MaterialCommunityIcons name="account" color={color} size={size} />
           ),
         }}
-      /> */}
+      />
     </Tabs>
   );
 }

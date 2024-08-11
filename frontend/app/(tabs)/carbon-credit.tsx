@@ -6,8 +6,8 @@
 //   FlatList,
 //   SafeAreaView,
 // } from "react-native";
-// import CreditItem from "../../components/carbon-credit/CreditItem";
-// import ProjectCard from "../../components/carbon-credit/ProjectCard";
+// import CreditItem from "@/components/carbon-credit/CreditItem";
+// import ProjectCard from "@/components/carbon-credit/ProjectCard";
 // import { fetchCredits } from "@/api/credits";
 // import { addToCart, removeFromCart, getCart, clearCart } from "@/api/cart";
 // import { CarbonCredit } from "@/types";
