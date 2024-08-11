@@ -12,14 +12,14 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TextInput } from "react-native-paper";
-// import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { router } from "expo-router";
-// import { GoogleSignin } from "@react-native-google-signin/google-signin";
-// import {
-//   onSignup,
-//   onGoogleSignUp,
-//   onContinueAnonymously,
-// } from "../../api/auth";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import {
+  onSignup,
+  onGoogleSignUp,
+  onContinueAnonymously,
+} from "@/api/auth";
 
 export default function SignupScreen() {
   const [email, setEmail] = useState("");
@@ -30,21 +30,21 @@ export default function SignupScreen() {
 
   const { height, width } = useWindowDimensions();
 
-  // useEffect(() => {
-  //   GoogleSignin.configure({
-  //     webClientId:
-  //       "489135632905-iu340mh7lub0iis2q18upvus42fa2roo.apps.googleusercontent.com",
-  //   });
+  useEffect(() => {
+    GoogleSignin.configure({
+      webClientId:
+        "489135632905-iu340mh7lub0iis2q18upvus42fa2roo.apps.googleusercontent.com",
+    });
 
-  //   const auth = getAuth();
-  //   const unsubscribe = onAuthStateChanged(auth, (user) => {
-  //     if (user) {
-  //       setIsAnonymous(user.isAnonymous);
-  //     }
-  //   });
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setIsAnonymous(user.isAnonymous);
+      }
+    });
 
-  //   return () => unsubscribe();
-  // }, []);
+    return () => unsubscribe();
+  }, []);
 
   const screenHeight = useWindowDimensions().height;
 
@@ -145,7 +145,7 @@ export default function SignupScreen() {
                   }
                 />
               </View>
-              <TouchableOpacity style={styles.createAccountButton}>
+              <TouchableOpacity style={styles.createAccountButton} onPress={() => onSignup(email, password, name)}>
                 <Text style={styles.createAccountButtonText}>
                   Create Account
                 </Text>
@@ -155,7 +155,7 @@ export default function SignupScreen() {
                 <Text style={styles.orText}>Or</Text>
                 <View style={styles.orLine} />
               </View>
-              <TouchableOpacity style={styles.googleButton}>
+              <TouchableOpacity style={styles.googleButton} onPress={() => onGoogleSignUp()}>
                 <Image
                   source={{
                     uri: "https://img.icons8.com/color/48/000000/google-logo.png",
@@ -184,7 +184,7 @@ export default function SignupScreen() {
                 </View>
               ) : (
                 <View style={styles.guestContainer}>
-                  <TouchableOpacity>
+                  <TouchableOpacity onPress={() => onContinueAnonymously()}>
                     <Text style={styles.guestLink}>Or continue as guest</Text>
                   </TouchableOpacity>
                 </View>

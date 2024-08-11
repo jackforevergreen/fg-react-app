@@ -10,6 +10,7 @@ import {
   linkWithCredential,
   signOut,
   sendPasswordResetEmail,
+  signInWithEmailAndPassword
 } from "firebase/auth";
 import { router } from "expo-router";
 import {
@@ -176,6 +177,65 @@ export const onContinueAnonymously = async () => {
     } else {
       // If data exists for the current month, redirect to home
       router.replace("/signup");
+    }
+  } catch (error: any) {
+    const errorCode = error.code;
+    const errorMessage = error.message;
+    Alert.alert("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
+  }
+};
+
+/* Function to sign up the user with the email and password */
+export const onLogin = (email: string, password: string) => {
+  const auth = getAuth();
+  signInWithEmailAndPassword(auth, email, password)
+    .then((userCredential) => {
+      const user = userCredential.user;
+      if (user) {
+        fetchEmissionsData().then((data) => {
+          if (data) {
+            router.replace("/home");
+          } else {
+            router.replace("/pre-survey");
+          }
+        });
+      }
+    })
+    .catch((error) => {
+      const errorCode = error.code;
+      const errorMessage = error.message;
+      Alert.alert("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
+      console.log("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
+    });
+};
+
+export const onGoogleLogin = async () => {
+  try {
+    await GoogleSignin.hasPlayServices();
+    const user = await GoogleSignin.signIn();
+
+    const auth = getAuth();
+    const credential = GoogleAuthProvider.credential(user.idToken);
+    const userCredential = await signInWithCredential(auth, credential);
+
+    const currentUser = userCredential.user;
+    if (currentUser) {
+      fetchEmissionsData()
+        .then((data) => {
+          if (data) {
+            router.replace("/home");
+          } else {
+            router.replace("/pre-survey");
+          }
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          Alert.alert(
+            "Error",
+            `Code: ${errorCode}\nMessage: ${errorMessage}`
+          );
+        });
     }
   } catch (error: any) {
     const errorCode = error.code;

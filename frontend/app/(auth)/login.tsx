@@ -1,189 +1,251 @@
-// import { useState } from "react";
-// import {
-//   View,
-//   Text,
-//   Image,
-//   KeyboardAvoidingView,
-//   ScrollView,
-//   Alert,
-//   TouchableOpacity,
-// } from "react-native";
-// import { SafeAreaView } from "react-native-safe-area-context";
-// import { TextInput } from "react-native-paper";
-// import { Link, router } from "expo-router";
-// import {
-//   getAuth,
-//   signInWithEmailAndPassword,
-//   GoogleAuthProvider,
-//   signInWithCredential,
-// } from "firebase/auth";
-// import { GoogleSignin } from "@react-native-google-signin/google-signin";
-// import { fetchEmissionsData } from "../../api/emissions";
+import { useState } from "react";
+import {
+  View,
+  Text,
+  Image,
+  KeyboardAvoidingView,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { TextInput } from "react-native-paper";
+import { Link, router } from "expo-router";
+import { onLogin, onGoogleLogin } from "@/api/auth";
 
-// export default function LoginScreen() {
-//   const [email, setEmail] = useState("");
-//   const [password, setPassword] = useState("");
-//   const [showPassword, setShowPassword] = useState(false);
-//   const auth = getAuth();
+export default function LoginScreen() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
-//   /* Function to sign up the user with the email and password */
-//   const onLogin = () => {
-//     signInWithEmailAndPassword(auth, email, password)
-//       .then((userCredential) => {
-//         const user = userCredential.user;
-//         if (user) {
-//           fetchEmissionsData().then((data) => {
-//             if (data) {
-//               router.replace("/home");
-//             } else {
-//               router.replace("/pre-survey");
-//             }
-//           });
-//         }
-//       })
-//       .catch((error) => {
-//         const errorCode = error.code;
-//         const errorMessage = error.message;
-//         Alert.alert("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
-//       });
-//   };
+  return (
+    <KeyboardAvoidingView behavior="padding" style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        <SafeAreaView style={styles.safeAreaView}>
+          <Text style={styles.title}>
+            Log <Text style={styles.titleHighlight}>in</Text>
+          </Text>
+          <View style={styles.logoContainer}>
+            <Image
+              style={styles.logo}
+              source={require("../../assets/images/tree-logo.png")}
+            />
+          </View>
+          <View style={styles.formContainer}>
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Email</Text>
+              <TextInput
+                placeholder="Ex. abc@example.com"
+                style={styles.textInput}
+                value={email}
+                onChangeText={setEmail}
+                mode="outlined"
+                dense={true}
+                outlineStyle={{ borderColor: "#000" }}
+                theme={{ roundness: 9999, colors: { background: "#fff" } }}
+                textColor="#000"
+                left={
+                  <TextInput.Icon
+                    icon="at"
+                    color={"#000"}
+                    style={{ height: "100%", width: "100%" }}
+                  />
+                }
+              />
+            </View>
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Your Password</Text>
+              <TextInput
+                placeholder="Your Password"
+                secureTextEntry={!showPassword}
+                style={styles.textInput}
+                value={password}
+                onChangeText={setPassword}
+                mode="outlined"
+                dense={true}
+                outlineStyle={{ borderColor: "#000" }}
+                theme={{ roundness: 9999, colors: { background: "#fff" } }}
+                textColor="#000"
+                left={
+                  <TextInput.Icon
+                    icon="lock"
+                    color="#000"
+                    style={{ height: "100%", width: "100%" }}
+                  />
+                }
+                right={
+                  <TextInput.Icon
+                    icon={showPassword ? "eye-off" : "eye"}
+                    onPress={() => setShowPassword(!showPassword)}
+                    color="#000"
+                    style={{ height: "100%", width: "100%" }}
+                  />
+                }
+              />
+            </View>
+            <View style={styles.forgotPasswordContainer}>
+              <Link href="/forgot-password">
+                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+              </Link>
+            </View>
+            <TouchableOpacity
+              onPress={() => onLogin(email, password)}
+              style={styles.loginButton}
+            >
+              <Text style={styles.loginButtonText}>Log in</Text>
+            </TouchableOpacity>
+            <View style={styles.orContainer}>
+              <View style={styles.orLine} />
+              <Text style={styles.orText}>Or</Text>
+              <View style={styles.orLine} />
+            </View>
+            <TouchableOpacity
+              onPress={() => {
+                onGoogleLogin();
+              }}
+              style={styles.googleButton}
+            >
+              <Image
+                source={{
+                  uri: "https://img.icons8.com/color/48/000000/google-logo.png",
+                }}
+                style={styles.googleIcon}
+              />
+              <Text style={styles.googleButtonText}>Continue with Google</Text>
+            </TouchableOpacity>
+            <View style={styles.signUpContainer}>
+              <TouchableOpacity onPress={() => router.navigate("/signup")}>
+                <Text style={styles.signUpText}>Back to Sign Up</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </SafeAreaView>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+}
 
-//   const onGoogleLogin = async () => {
-//     try {
-//       await GoogleSignin.hasPlayServices();
-//       const user = await GoogleSignin.signIn();
-
-//       const auth = getAuth();
-//       const credential = GoogleAuthProvider.credential(user.idToken);
-//       const userCredential = await signInWithCredential(auth, credential);
-
-//       const currentUser = userCredential.user;
-//       if (currentUser) {
-//         fetchEmissionsData()
-//           .then((data) => {
-//             if (data) {
-//               router.replace("/home");
-//             } else {
-//               router.replace("/pre-survey");
-//             }
-//           })
-//           .catch((error) => {
-//             const errorCode = error.code;
-//             const errorMessage = error.message;
-//             Alert.alert(
-//               "Error",
-//               `Code: ${errorCode}\nMessage: ${errorMessage}`
-//             );
-//           });
-//       }
-//     } catch (error: any) {
-//       const errorCode = error.code;
-//       const errorMessage = error.message;
-//       Alert.alert("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
-//     }
-//   };
-
-//   return (
-//     <KeyboardAvoidingView
-//       behavior="padding"
-//       style={{ flex: 1, backgroundColor: "white" }}
-//     >
-//       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-//         <SafeAreaView className="flex-1 justify-center px-4">
-//           <Text className="text-5xl font-bold text-center tracking-tighter my-10">
-//             Log <Text className="text-primary">in</Text>
-//           </Text>
-//           <View className="items-center">
-//             <Image
-//               className="w-80 h-40"
-//               source={require("../../assets/images/tree-logo.png")}
-//             />
-//           </View>
-//           <View className="space-y-4 px-12 mt-6">
-//             <View className="relative">
-//               <Text className="mb-2">Email</Text>
-//               <TextInput
-//                 placeholder="Ex. abc@example.com"
-//                 className="w-full pl-16"
-//                 value={email}
-//                 onChangeText={setEmail}
-//                 mode="outlined"
-//                 dense={true}
-//                 outlineStyle={{ borderColor: "#000" }}
-//                 theme={{ roundness: 9999, colors: { background: "#fff" } }}
-//                 textColor="#000"
-//                 left={<TextInput.Icon icon="at" color={"#000"} />}
-//               />
-//             </View>
-//             <View className="relative mt-6">
-//               <Text className="mt-4 mb-2">Your Password</Text>
-//               <TextInput
-//                 placeholder="Your Password"
-//                 secureTextEntry={!showPassword}
-//                 className="w-full pl-16"
-//                 value={password}
-//                 onChangeText={setPassword}
-//                 mode="outlined"
-//                 dense={true}
-//                 outlineStyle={{ borderColor: "#000" }}
-//                 theme={{ roundness: 9999, colors: { background: "#fff" } }}
-//                 textColor="#000"
-//                 left={<TextInput.Icon icon="lock" color="#000" />}
-//                 right={
-//                   <TextInput.Icon
-//                     icon={showPassword ? "eye-off" : "eye"}
-//                     onPress={() => setShowPassword(!showPassword)}
-//                     color="#000"
-//                   />
-//                 }
-//               />
-//             </View>
-//             <View className="flex flex-row justify-end">
-//               <Link href="/forgot-password">
-//                 <Text className="text-lg font-normal underline mt-2">
-//                   Forgot Password?
-//                 </Text>
-//               </Link>
-//             </View>
-//             <TouchableOpacity
-//               onPress={onLogin}
-//               className="bg-primary rounded-full p-4 hover:bg-primary/90 mt-8 border shadow-sm"
-//             >
-//               <Text className="text-onPrimary text-center text-2xl font-bold">
-//                 Log in
-//               </Text>
-//             </TouchableOpacity>
-//             <View className="flex flex-row items-center my-4">
-//               <View className="flex-1 h-1 bg-onBackground" />
-//               <Text className="mx-4 font-bold text-xl">Or</Text>
-//               <View className="flex-1 h-1 bg-onBackground" />
-//             </View>
-//             <TouchableOpacity
-//               onPress={() => {
-//                 onGoogleLogin();
-//               }}
-//               className="flex flex-row items-center justify-center bg-white border border-black rounded-full p-4 shadow-sm"
-//             >
-//               <Image
-//                 source={{
-//                   uri: "https://img.icons8.com/color/48/000000/google-logo.png",
-//                 }}
-//                 className="w-8 h-8 mr-4"
-//               />
-//               <Text className="text-center text-xl font-bold">
-//                 Continue with Google
-//               </Text>
-//             </TouchableOpacity>
-//             <View className="flex-row justify-center mt-8">
-//               <TouchableOpacity onPress={() => router.navigate("/signup")}>
-//                 <Text className="text-xl font-extrabold underline">
-//                   Back to Sign Up
-//                 </Text>
-//               </TouchableOpacity>
-//             </View>
-//           </View>
-//         </SafeAreaView>
-//       </ScrollView>
-//     </KeyboardAvoidingView>
-//   );
-// }
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "white",
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+  },
+  safeAreaView: {
+    flex: 1,
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    paddingBottom: 64,
+  },
+  title: {
+    fontSize: 48,
+    fontWeight: "bold",
+    textAlign: "center",
+    letterSpacing: -1,
+    marginVertical: 40,
+  },
+  titleHighlight: {
+    color: "#409858",
+  },
+  logoContainer: {
+    alignItems: "center",
+  },
+  logo: {
+    width: 320,
+    height: 160,
+  },
+  formContainer: {
+    marginTop: 24,
+    paddingHorizontal: 48,
+    rowGap: 16,
+  },
+  inputContainer: {
+    marginBottom: 24,
+  },
+  inputLabel: {
+    marginBottom: 8,
+  },
+  textInput: {
+    width: "100%",
+  },
+  forgotPasswordContainer: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+  },
+  forgotPasswordText: {
+    fontSize: 18,
+    fontWeight: "normal",
+    textDecorationLine: "underline",
+    marginTop: 8,
+  },
+  loginButton: {
+    backgroundColor: "#409858",
+    borderRadius: 9999,
+    padding: 16,
+    marginTop: 32,
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.18,
+    shadowRadius: 1.0,
+    elevation: 1,
+  },
+  loginButtonText: {
+    color: "#FFF",
+    textAlign: "center",
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+  orContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 16,
+  },
+  orLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#191C19",
+  },
+  orText: {
+    marginHorizontal: 16,
+    fontWeight: "bold",
+    fontSize: 20,
+  },
+  googleButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "white",
+    borderWidth: 1,
+    borderColor: "black",
+    borderRadius: 9999,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.18,
+    shadowRadius: 1.0,
+    elevation: 1,
+  },
+  googleIcon: {
+    width: 32,
+    height: 32,
+    marginRight: 16,
+  },
+  googleButtonText: {
+    textAlign: "center",
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  signUpContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 32,
+  },
+  signUpText: {
+    fontSize: 20,
+    fontWeight: "800",
+    textDecorationLine: "underline",
+  },
+});
