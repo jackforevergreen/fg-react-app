@@ -7,10 +7,11 @@
     "android": "expo start --android",
     "ios": "expo start --web",
     "web": "expo start --web",
-    "dev": "npx tailwindcss -i ./global.css -o ./public/global.css --watch",
     "test": "jest --watchAll",
     "lint": "expo lint",
-    "build": "node scripts/loadEnv.js"
+    "build": "node scripts/loadEnv.js",
+    "predeploy": "expo export -p web",
+    "deploy-hosting": "npm run predeploy && firebase deploy --only hosting"
   },
   "jest": {
     "preset": "jest-expo"

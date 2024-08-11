@@ -11,9 +11,9 @@ service cloud.firestore {
     //
     // Make sure to write security rules for your app before that time, or else
     // all client requests to your Firestore database will be denied until you Update
-    // your rules
+    // your rule
     match /{document=**} {
-      allow read, write: if request.time < timestamp.date(2024, 8, 9);
+      allow read, write: if request.time < timestamp.date(2024, 9, 9);
     }
   }
 }
