@@ -241,6 +241,7 @@ export const onGoogleLogin = async () => {
     const errorCode = error.code;
     const errorMessage = error.message;
     Alert.alert("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
+    console.log("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
   }
 };
 

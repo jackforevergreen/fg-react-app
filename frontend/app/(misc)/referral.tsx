@@ -4,13 +4,13 @@ import {
   View,
   Text,
   TextInput,
-  Alert,
+  // Alert,
   Pressable,
   KeyboardAvoidingView,
   ScrollView,
   StyleSheet,
 } from "react-native";
-import axios from "axios";
+// import axios from "axios";
 
 const ReferralForm = () => {
   // Define state variables to hold the input values
@@ -19,34 +19,34 @@ const ReferralForm = () => {
   const [note, setNote] = useState("");
 
   // Function to handle the referral form submission
-  const handleReferral = async () => {
-    try {
-      // Send a POST request to the Flask backend to send an email
-      const res = await axios.post("http://<YOUR_MACHINE_IP>:5000/send-email", {
-        to: friendEmail,
-        subject: "Help the earth! Join Forevergreen today!",
-        content:
-          "Your friend " +
-          friendName +
-          " has referred you to join Forevergreen, a platform that helps you track your carbon footprint and make a positive impact on the environment. " +
-          friendName +
-          " says: " +
-          note +
-          " Sign up today to start your journey to a greener future!",
-      });
+  // const handleReferral = async () => {
+  //   try {
+  //     // Send a POST request to the Flask backend to send an email
+  //     const res = await axios.post("http://<YOUR_MACHINE_IP>:5000/send-email", {
+  //       to: friendEmail,
+  //       subject: "Help the earth! Join Forevergreen today!",
+  //       content:
+  //         "Your friend " +
+  //         friendName +
+  //         " has referred you to join Forevergreen, a platform that helps you track your carbon footprint and make a positive impact on the environment. " +
+  //         friendName +
+  //         " says: " +
+  //         note +
+  //         " Sign up today to start your journey to a greener future!",
+  //     });
 
-      // Show a success alert if the email was sent successfully
-      Alert.alert("Success", "Referral sent successfully!");
+  //     // Show a success alert if the email was sent successfully
+  //     Alert.alert("Success", "Referral sent successfully!");
 
-      // Clear input fields after successful send
-      setFriendName("");
-      setFriendEmail("");
-      setNote("");
-    } catch (error) {
-      // Show an error alert if the email sending failed
-      Alert.alert("Error", "Failed to send referral.");
-    }
-  };
+  //     // Clear input fields after successful send
+  //     setFriendName("");
+  //     setFriendEmail("");
+  //     setNote("");
+  //   } catch (error) {
+  //     // Show an error alert if the email sending failed
+  //     Alert.alert("Error", "Failed to send referral.");
+  //   }
+  // };
 
   return (
     <KeyboardAvoidingView behavior="padding" style={styles.container}>
@@ -100,7 +100,9 @@ const ReferralForm = () => {
                 onChangeText={setNote}
               />
             </View>
-            <Pressable style={styles.submitButton} onPress={handleReferral}>
+            <Pressable style={styles.submitButton} 
+            // onPress={handleReferral}
+            >
               <Text style={styles.submitButtonText}>Submit</Text>
             </Pressable>
           </View>

@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { TextInput } from "react-native-paper";
 import { Link, router } from "expo-router";
 import { onLogin, onGoogleLogin } from "@/api/auth";
+import { TreeLogo } from "@/constants/Images";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -28,7 +29,7 @@ export default function LoginScreen() {
           <View style={styles.logoContainer}>
             <Image
               style={styles.logo}
-              source={require("../../assets/images/tree-logo.png")}
+              source={TreeLogo}
             />
           </View>
           <View style={styles.formContainer}>

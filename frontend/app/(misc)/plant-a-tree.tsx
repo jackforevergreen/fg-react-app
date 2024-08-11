@@ -8,6 +8,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { router } from "expo-router";
+import { TeakTree, OakTree, PepperTree } from "@/constants/Images";
 
 type TreeOption = {
   name: string;
@@ -20,21 +21,21 @@ const treeOptions: TreeOption[] = [
   {
     name: "Costa Rican Teak Tree",
     price: 10.0,
-    image: require("../../assets/images/teak-tree-1.png"),
+    image: TeakTree,
     description:
       "Planting teak helps reforest areas, supports wildlife habitats, and absorbs carbon, aiding in climate change mitigation.",
   },
   {
     name: "PA Oak Tree",
     price: 10.0,
-    image: require("../../assets/images/oak-tree-1.png"),
+    image: OakTree,
     description:
       "Oak trees provide essential ecological benefits, such as biodiversity, stabilizing soil, and offering vital habitat and food sources for various wildlife species.",
   },
   {
     name: "Brazilian Pepper Tree",
     price: 10.0,
-    image: require("../../assets/images/pepper-tree-1.png"),
+    image: PepperTree,
     description:
       "Planting Pepper trees helps regenerate rain forest in Brazil while cooling down temperatures.",
   },

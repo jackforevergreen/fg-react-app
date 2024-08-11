@@ -15,11 +15,8 @@ import { TextInput } from "react-native-paper";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { router } from "expo-router";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
-import {
-  onSignup,
-  onGoogleSignUp,
-  onContinueAnonymously,
-} from "@/api/auth";
+import { onSignup, onGoogleSignUp, onContinueAnonymously } from "@/api/auth";
+import { TreeLogo } from "@/constants/Images";
 
 export default function SignupScreen() {
   const [email, setEmail] = useState("");
@@ -67,7 +64,7 @@ export default function SignupScreen() {
               <View style={styles.logoContainer}>
                 <Image
                   style={styles.logo}
-                  source={require("../../assets/images/tree-logo.png")}
+                  source={TreeLogo}
                   resizeMode="contain"
                 />
               </View>
@@ -145,7 +142,10 @@ export default function SignupScreen() {
                   }
                 />
               </View>
-              <TouchableOpacity style={styles.createAccountButton} onPress={() => onSignup(email, password, name)}>
+              <TouchableOpacity
+                style={styles.createAccountButton}
+                onPress={() => onSignup(email, password, name)}
+              >
                 <Text style={styles.createAccountButtonText}>
                   Create Account
                 </Text>
@@ -155,7 +155,10 @@ export default function SignupScreen() {
                 <Text style={styles.orText}>Or</Text>
                 <View style={styles.orLine} />
               </View>
-              <TouchableOpacity style={styles.googleButton} onPress={() => onGoogleSignUp()}>
+              <TouchableOpacity
+                style={styles.googleButton}
+                onPress={() => onGoogleSignUp()}
+              >
                 <Image
                   source={{
                     uri: "https://img.icons8.com/color/48/000000/google-logo.png",
