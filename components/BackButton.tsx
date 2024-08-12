@@ -14,7 +14,10 @@ export default function BackButton() {
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 70,
+    position: "absolute",
+    top: 8,
+    left: 8,
+    paddingTop: 80,
     flexDirection: "row",
     alignItems: "center",
   },

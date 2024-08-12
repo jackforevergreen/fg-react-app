@@ -6,14 +6,12 @@ const QuestionSlider = ({
   question,
   value,
   onChange,
-  labels,
   minimumValue,
   maximumValue,
 }: {
   question: string;
   value: number;
   onChange: (value: number) => void;
-  labels: string[];
   minimumValue: number;
   maximumValue: number;
 }) => {
@@ -35,9 +33,9 @@ const QuestionSlider = ({
           CustomMark={({ value, active }) => (
             <View style={styles.labelsContainer}>
               {active ? (
-                <Text style={styles.activeLabel}>{value}</Text>
+                <Text style={styles.activeLabel}>{value < 7 ? value : "7+"}</Text>
               ) : (
-                <Text style={styles.labelText}>{value}</Text>
+                <Text style={styles.labelText}>{value < 7 ? value : "7+"}</Text>
               )}
             </View>
           )}
@@ -65,9 +63,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginTop: 64,
+    backgroundColor: "transparent",
+    height: 18,
+    width: 18,
+    marginRight: -9,
   },
   labelText: {
     textAlign: "center",
+    color: "black",
+    fontSize: 14,
   },
   activeLabel: {
     fontWeight: "bold",

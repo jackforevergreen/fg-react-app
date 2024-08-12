@@ -6,7 +6,7 @@ import {
   RadioButtonGroup,
   NextButton,
 } from "@/components/carbon-calculator";
-import { useEmissions } from "@/components/carbon-calculator";
+import { useEmissions } from "@/contexts";
 
 export default function DietCalculator() {
   const { transportationData, dietData, updateDietData, updateTotalData } =

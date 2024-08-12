@@ -16,8 +16,8 @@ import {
   NextButton,
   QuestionSlider,
   RadioButtonGroup,
-  useEmissions,
 } from "@/components/carbon-calculator";
+import { useEmissions } from "@/contexts";
 import { saveEmissionsData } from "@/api/emissions";
 
 export default function EnergyCalculator() {
@@ -401,7 +401,6 @@ export default function EnergyCalculator() {
               setPeopleInHome(value);
               updateEnergyData({ peopleInHome: value });
             }}
-            labels={["1", "2", "3", "4", "5", "6", "7", "8+"]}
             minimumValue={1}
             maximumValue={7}
           />
