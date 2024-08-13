@@ -15,7 +15,7 @@ import {
 import { router, useLocalSearchParams } from "expo-router";
 import { Image } from "expo-image";
 import { getAuth } from "firebase/auth";
-import BackButton from "@/components/BackButton";
+import { BackButton } from "@/components/common";
 import Icon from "react-native-vector-icons/FontAwesome";
 
 const blurhash =

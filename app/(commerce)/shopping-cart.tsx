@@ -9,10 +9,11 @@ import {
 import { Image } from "expo-image";
 import { FGCoin } from "@/constants/Images";
 import { useCart } from "@/contexts";
-import BackButton from "@/components/BackButton";
+import { BackButton } from "@/components/common";
 import { CartItem } from "@/types";
 import { LinearGradient } from "expo-linear-gradient";
 import Icon from "react-native-vector-icons/Feather";
+import { router } from "expo-router";
 
 export default function ShoppingCartScreen() {
   const { items, getCartTotal, incrementQuantity, decrementQuantity } =
@@ -88,12 +89,18 @@ export default function ShoppingCartScreen() {
             <Text style={styles.totalValueText}>{getCartTotal()}</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.purchaseButton}>
+        <TouchableOpacity
+          style={styles.purchaseButton}
+          onPress={() => router.navigate("fg-coins")}
+        >
           <Text style={styles.purchaseButtonText}>
             Not Enough Forevergreen Coins. Buy now?
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.continueButton}>
+        <TouchableOpacity
+          style={styles.continueButton}
+          onPress={() => router.navigate("carbon-credit")}
+        >
           <Text style={styles.continueButtonText}>Continue Shopping</Text>
         </TouchableOpacity>
       </View>
