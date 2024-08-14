@@ -9,11 +9,11 @@ import {
 import { Image } from "expo-image";
 import { FGCoin } from "@/constants/Images";
 import { useCart } from "@/contexts";
-import { BackButton } from "@/components/common";
 import { CartItem } from "@/types";
 import { LinearGradient } from "expo-linear-gradient";
 import Icon from "react-native-vector-icons/Feather";
 import { router } from "expo-router";
+import { PageHeader, BackButton } from "@/components/common";
 
 export default function ShoppingCartScreen() {
   const { items, getCartTotal, incrementQuantity, decrementQuantity } =
@@ -60,18 +60,11 @@ export default function ShoppingCartScreen() {
     <View style={styles.container}>
       <View style={styles.greenCircleLarge} />
       <View style={styles.greenCircleSmall} />
+      <PageHeader
+        subtitle="Shopping Cart"
+        description="Make a Positive Impact on the Environment Today!"
+      />
       <BackButton />
-      <View style={styles.headerContainer}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>
-            Forever<Text style={styles.headerTitleGreen}>green</Text>
-          </Text>
-          <Text style={styles.headerSubtitle}>Shopping Cart</Text>
-          <Text style={styles.headerText}>
-            Make a Positive Impact on the Environment Today!
-          </Text>
-        </View>
-      </View>
 
       <View style={styles.creditList}>
         <FlatList
@@ -131,31 +124,6 @@ const styles = StyleSheet.create({
     borderRadius: 9999,
     top: "25%",
     left: "-25%",
-  },
-  headerContainer: {
-    paddingTop: 24,
-  },
-  header: {
-    alignItems: "center",
-    marginTop: 32,
-    marginBottom: 16,
-  },
-  headerTitle: {
-    fontSize: 40,
-    fontWeight: "bold",
-  },
-  headerTitleGreen: {
-    color: "#409858",
-  },
-  headerSubtitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  headerText: {
-    fontSize: 16,
-    textAlign: "center",
-    marginBottom: 8,
   },
   creditList: {
     marginBottom: 24,

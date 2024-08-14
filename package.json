@@ -10,7 +10,7 @@
     "test": "jest --watchAll",
     "lint": "expo lint",
     "build": "node scripts/loadEnv.js",
-    "predeploy": "expo export -p web",
+    "predeploy": "npx expo export -p web",
     "deploy-hosting": "npm run predeploy && firebase deploy --only hosting"
   },
   "jest": {
@@ -48,7 +48,6 @@
     "react-native": "^0.74.3",
     "react-native-chart-kit": "^6.12.0",
     "react-native-gesture-handler": "~2.16.1",
-    "react-native-pager-view": "^6.3.0",
     "react-native-paper": "^5.12.3",
     "react-native-progress": "^5.0.1",
     "react-native-purchases": "^7.28.1",
