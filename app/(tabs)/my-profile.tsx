@@ -11,8 +11,8 @@ import {
 import Icon from "react-native-vector-icons/FontAwesome";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 import { Image } from "expo-image";
-import { LineChartBreakdown } from "../../components/breakdown";
-import { getUserFollowCounts } from "../../api/social";
+import { LineChartBreakdown } from "@/components/breakdown";
+import { getUserFollowCounts } from "@/api/social";
 import { useFocusEffect } from "@react-navigation/native";
 
 const blurhash =

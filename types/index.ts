@@ -14,3 +14,5 @@ export type CarbonCredit = {
   }[];
   CTA: string;
 };
+
+export type CartItem = { quantity: number } & CarbonCredit;

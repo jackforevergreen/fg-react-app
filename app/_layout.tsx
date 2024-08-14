@@ -4,12 +4,13 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import "react-native-reanimated";
 import { PaperProvider } from "react-native-paper";
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps } from "firebase/app";
 import { initializeAuth } from "firebase/auth";
 // @ts-expect-error Some error with types in this import because of the versions
-import { getReactNativePersistence } from '@firebase/auth/dist/rn/index.js';
+import { getReactNativePersistence } from "@firebase/auth/dist/rn/index.js";
 import { getFirestore } from "firebase/firestore";
-import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
+import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
+import { CartProvider } from "@/contexts";
 
 // Initialize Firebase
 const firebaseConfig = {
@@ -23,11 +24,14 @@ const firebaseConfig = {
   measurementId: "G-TSS2FD4QBJ",
 };
 
-export const app = initializeApp(firebaseConfig);
-export const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(ReactNativeAsyncStorage)
-});
-export const db = getFirestore(app);
+if (!getApps().length) {
+  const app = initializeApp(firebaseConfig);
+  initializeAuth(app, {
+    persistence: getReactNativePersistence(ReactNativeAsyncStorage),
+  });
+  getFirestore(app);
+}
+
 
 // import Purchases, { LOG_LEVEL } from "react-native-purchases";
 // import { Platform } from "react-native";
@@ -69,15 +73,17 @@ export default function RootLayout() {
 
   return (
     <PaperProvider>
-      <Stack
-        screenOptions={{
-          // Hide the header for all other routes.
-          headerShown: false,
-        }}
-      >
-        <Stack.Screen name="+not-found" />
-        <Stack.Screen name="index" />
-      </Stack>
+      <CartProvider>
+        <Stack
+          screenOptions={{
+            // Hide the header for all other routes.
+            headerShown: false,
+          }}
+        >
+          <Stack.Screen name="+not-found" />
+          <Stack.Screen name="index" />
+        </Stack>
+      </CartProvider>
     </PaperProvider>
   );
 }

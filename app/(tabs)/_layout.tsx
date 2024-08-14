@@ -8,7 +8,7 @@ export default function TabsLayout() {
         headerShown: false,
       }}
     >
-      {/* <Tabs.Screen
+      <Tabs.Screen
         name="carbon-credit"
         options={{
           tabBarLabel: "",
@@ -22,7 +22,7 @@ export default function TabsLayout() {
             <MaterialCommunityIcons name="cash" color={color} size={size} />
           ),
         }}
-      /> */}
+      />
       <Tabs.Screen
         name="tree-planting"
         options={{

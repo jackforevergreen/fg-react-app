@@ -15,7 +15,7 @@ import {
   TransportQuestion,
   NextButton,
 } from "@/components/carbon-calculator";
-import { useEmissions } from "@/components/carbon-calculator";
+import { useEmissions } from "@/contexts";
 
 export default function TransportationCalculator() {
   // Context for data
@@ -216,7 +216,6 @@ export default function TransportationCalculator() {
                 updateTransportationData({ longFlights: value });
                 markQuestionCompleted("longFlights");
               }}
-              labels={["0", "1", "2", "3", "4", "5", "6", "7+"]}
               minimumValue={0}
               maximumValue={7}
             />
@@ -229,7 +228,6 @@ export default function TransportationCalculator() {
                 updateTransportationData({ shortFlights: value });
                 markQuestionCompleted("shortFlights");
               }}
-              labels={["0", "1", "2", "3", "4", "5", "6", "7+"]}
               minimumValue={0}
               maximumValue={7}
             />

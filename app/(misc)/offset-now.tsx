@@ -7,7 +7,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { router } from "expo-router";
-import BackButton from "@/components/BackButton";
+import { BackButton } from "@/components/common";
 
 export default function OffsetNowScreen() {
   return (

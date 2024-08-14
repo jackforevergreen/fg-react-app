@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import { EmissionsProvider } from "@/components/carbon-calculator";
+import { EmissionsProvider } from "@/contexts";
 
 export default function CarbonCalculatorLayout() {
   return (
