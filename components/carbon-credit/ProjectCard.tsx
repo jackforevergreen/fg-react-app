@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,6 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import Icon from "react-native-vector-icons/Feather";
-import PagerView from "react-native-pager-view";
 import { CarbonCredit } from "@/types";
 import { FGCoin } from "@/constants/Images";
 import { useCart } from "@/contexts";
@@ -19,29 +18,23 @@ const ProjectCard = ({ project }: { project: CarbonCredit }) => {
   const [expanded, setExpanded] = useState(false);
   const { addToCart } = useCart();
 
-  const pagerRef = useRef<PagerView>(null);
-
   const toggleExpanded = () => setExpanded(!expanded);
   const incrementQuantity = () => setQuantity(quantity + 1);
   const decrementQuantity = () => setQuantity(Math.max(1, quantity - 1));
 
   const navigateDetails = (direction: "next" | "prev") => {
     if (direction === "next") {
-      pagerRef.current?.setPage((currentPage + 1) % project.details.length);
+      setCurrentPage((prev) => (prev + 1) % project.details.length);
     } else {
-      pagerRef.current?.setPage(
-        (currentPage - 1 + project.details.length) % project.details.length
-      );
+      setCurrentPage((prev) => (prev - 1 + project.details.length) % project.details.length);
     }
   };
-
-  pagerRef.current?.setScrollEnabled(true);
 
   const handleAddToCart = () => {
     addToCart(project, quantity);
     setQuantity(1);
   };
-  
+
   if (!project) return null;
 
   return (
@@ -49,16 +42,15 @@ const ProjectCard = ({ project }: { project: CarbonCredit }) => {
       <View>
         <Text style={styles.title}>{project.name}</Text>
 
-        <PagerView
-          ref={pagerRef}
-          initialPage={0}
-          onPageSelected={(e) => {
-            setCurrentPage(e.nativeEvent.position);
-          }}
-          style={[styles.pagerView, { height: expanded ? 300 : 140 }]}
-        >
+        <View style={[styles.pagerView, { height: expanded ? 300 : 140 }]}>
           {project.details.map((detail, index) => (
-            <View key={index}>
+            <View
+              key={index}
+              style={[
+                styles.page,
+                { display: index === currentPage ? "flex" : "none" },
+              ]}
+            >
               <Text style={styles.detailTitle}>{detail.title}</Text>
               <ScrollView
                 style={[
@@ -98,7 +90,7 @@ const ProjectCard = ({ project }: { project: CarbonCredit }) => {
               )}
             </View>
           ))}
-        </PagerView>
+        </View>
       </View>
 
       <View style={styles.controls}>
@@ -178,7 +170,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   pagerView: {
-    flex: 1,
+    position: "relative",
+    overflow: "hidden",
+  },
+  page: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
   },
   detailTitle: {
     fontSize: 18,
