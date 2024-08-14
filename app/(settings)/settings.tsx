@@ -9,10 +9,10 @@ import {
 import Icon from "react-native-vector-icons/Feather";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 import { router, useRouter } from "expo-router";
-import { fetchEmissionsData } from "../../api/emissions";
+import { fetchEmissionsData } from "@/api/emissions";
 import { Image } from "expo-image";
-import { BackButton } from "../../components/common";
-import { handleLogout } from "../../api/auth";
+import { BackButton } from "@/components/common";
+import { handleLogout } from "@/api/auth";
 
 const blurhash =
   "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[";
