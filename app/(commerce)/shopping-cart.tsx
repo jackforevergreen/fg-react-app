@@ -1,4 +1,4 @@
-import React from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -14,10 +14,27 @@ import { LinearGradient } from "expo-linear-gradient";
 import Icon from "react-native-vector-icons/Feather";
 import { router } from "expo-router";
 import { PageHeader, BackButton } from "@/components/common";
+import { getFgCoinsBalance } from "@/api/coins";
+import { getAuth } from "firebase/auth";
+import { CoinBalance } from "@/components/CoinBalance";
 
 export default function ShoppingCartScreen() {
   const { items, getCartTotal, incrementQuantity, decrementQuantity } =
     useCart();
+
+  const [balance, setBalance] = useState<number | null>(0);
+  const [loading, setLoading] = useState(true);
+  const auth = getAuth();
+
+  useEffect(() => {
+    const fetchBalance = async () => {
+      const balance = await getFgCoinsBalance(auth.currentUser?.uid || "");
+      setBalance(balance);
+      setLoading(false);
+    };
+
+    fetchBalance();
+  }, [auth]);
 
   const renderItem = ({ item }: { item: CartItem }) => (
     <View style={styles.itemContainer}>
@@ -56,6 +73,14 @@ export default function ShoppingCartScreen() {
     </View>
   );
 
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.greenCircleLarge} />
@@ -65,6 +90,7 @@ export default function ShoppingCartScreen() {
         description="Make a Positive Impact on the Environment Today!"
       />
       <BackButton />
+      <CoinBalance />
 
       <View style={styles.creditList}>
         <FlatList
@@ -82,14 +108,25 @@ export default function ShoppingCartScreen() {
             <Text style={styles.totalValueText}>{getCartTotal()}</Text>
           </View>
         </View>
-        <TouchableOpacity
-          style={styles.purchaseButton}
-          onPress={() => router.navigate("fg-coins")}
-        >
-          <Text style={styles.purchaseButtonText}>
-            Not Enough Forevergreen Coins. Buy now?
-          </Text>
-        </TouchableOpacity>
+        {balance && balance >= getCartTotal() ? (
+          <TouchableOpacity
+            style={styles.purchaseButton}
+            onPress={() => router.navigate("fg-coins")}
+          >
+            <Text style={styles.purchaseButtonText}>
+              Buy Now with Forevergreen Coins
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={styles.purchaseButton}
+            onPress={() => router.navigate("fg-coins")}
+          >
+            <Text style={styles.purchaseButtonAltText}>
+              Not Enough Forevergreen Coins. Buy now?
+            </Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity
           style={styles.continueButton}
           onPress={() => router.navigate("carbon-credit")}
@@ -105,7 +142,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   greenCircleLarge: {
     position: "absolute",
@@ -161,6 +199,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   purchaseButtonText: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  purchaseButtonAltText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",

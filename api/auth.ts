@@ -10,7 +10,7 @@ import {
   linkWithCredential,
   signOut,
   sendPasswordResetEmail,
-  signInWithEmailAndPassword
+  signInWithEmailAndPassword,
 } from "firebase/auth";
 import { router } from "expo-router";
 import {
@@ -50,6 +50,7 @@ export const onSignup = async (
         name: name,
         email: email,
         isAnonymous: false,
+        fgCoins: 0,
       });
     } else {
       // Create new account
@@ -75,6 +76,7 @@ export const onSignup = async (
         followerCount: 0,
         followingCount: 0,
         isAnonymous: false,
+        fgCoins: 0,
       });
     }
 
@@ -90,6 +92,7 @@ export const onSignup = async (
     const errorCode = error.code;
     const errorMessage = error.message;
     Alert.alert("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
+    console.log(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
   }
 };
 
@@ -124,6 +127,7 @@ export const onGoogleSignUp = async () => {
           followerCount: 0,
           followingCount: 0,
           isAnonymous: false,
+          fgCoins: 0,
         },
         { merge: true }
       );
@@ -145,6 +149,7 @@ export const onGoogleSignUp = async () => {
     const errorCode = error.code;
     const errorMessage = error.message;
     Alert.alert("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
+    console.log(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
   }
 };
 
@@ -162,10 +167,6 @@ export const onContinueAnonymously = async () => {
       email: null,
       photoURL: null,
       createdAt: serverTimestamp(),
-      followers: [],
-      following: [],
-      followerCount: 0,
-      followingCount: 0,
       isAnonymous: true,
     });
 
@@ -182,6 +183,7 @@ export const onContinueAnonymously = async () => {
     const errorCode = error.code;
     const errorMessage = error.message;
     Alert.alert("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
+    console.log(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
   }
 };
 
@@ -205,7 +207,7 @@ export const onLogin = (email: string, password: string) => {
       const errorCode = error.code;
       const errorMessage = error.message;
       Alert.alert("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
-      console.log("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
+      console.log(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
     });
 };
 
@@ -231,17 +233,15 @@ export const onGoogleLogin = async () => {
         .catch((error) => {
           const errorCode = error.code;
           const errorMessage = error.message;
-          Alert.alert(
-            "Error",
-            `Code: ${errorCode}\nMessage: ${errorMessage}`
-          );
+          Alert.alert("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
+          console.log(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
         });
     }
   } catch (error: any) {
     const errorCode = error.code;
     const errorMessage = error.message;
     Alert.alert("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
-    console.log("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
+    console.log(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
   }
 };
 
@@ -262,6 +262,7 @@ export const handleLogout = () => {
           })
           .catch((error) => {
             Alert.alert("Error", "Failed to logout. Please try again.");
+            console.log("Error: Failed to logout. Please try again.");
           });
       },
     },
@@ -277,14 +278,19 @@ export const handleResetPassword = (email: string) => {
 
   sendPasswordResetEmail(auth, email)
     .then(() => {
+      // todo: replace this with an actual helper message for web
       Alert.alert(
         "Success",
         "Password reset email sent. Please check your inbox.",
         [{ text: "OK", onPress: () => router.push("/login") }]
       );
+      console.log(
+        "Success: Password reset email sent. Please check your inbox."
+      );
     })
     .catch((error) => {
       const errorMessage = error.message;
       Alert.alert("Error", `Failed to send reset email: ${errorMessage}`);
+      console.log(`Error: Failed to send reset email: ${errorMessage}`);
     });
 };

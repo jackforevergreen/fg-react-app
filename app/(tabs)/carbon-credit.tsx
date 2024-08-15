@@ -9,19 +9,26 @@ import {
 } from "react-native";
 import CreditItem from "@/components/carbon-credit/CreditItem";
 import ProjectCard from "@/components/carbon-credit/ProjectCard";
-import { fetchCredits } from "@/api/credits";
+import { fetchCredits } from "@/api/products";
 import { CarbonCredit } from "@/types";
-import Icon from "react-native-vector-icons/Feather";
 import { useCart } from "@/contexts";
-import { router } from "expo-router";
+import { PageHeader } from "@/components/common";
+import { CoinBalance } from "@/components/CoinBalance";
+import { ShoppingCartBtn } from "@/components/ShoppingCartBtn";
+import { getAuth } from "firebase/auth";
+import { getFgCoinsBalance } from "@/api/coins";
 
 export default function CarbonCreditScreen() {
+  const auth = getAuth();
+  const { items } = useCart();
+
   const [selectedProject, setSelectedProject] = useState<CarbonCredit | null>(
     null
   );
   const [credits, setCredits] = useState<CarbonCredit[]>([]);
   const [loading, setLoading] = useState(true);
-  const { items } = useCart();
+  const [balance, setBalance] = useState<number | null>(0);
+
   const numItems = items.reduce((total, item) => total + item.quantity, 0);
 
   useEffect(() => {
@@ -32,6 +39,9 @@ export default function CarbonCreditScreen() {
         setCredits(result as CarbonCredit[]);
         setSelectedProject(result[0] as CarbonCredit);
       }
+
+      const coins = await getFgCoinsBalance(auth.currentUser?.uid || "");
+      setBalance(coins);
     };
     initializeData();
     setLoading(false);
@@ -48,36 +58,21 @@ export default function CarbonCreditScreen() {
   );
 
   const renderHeader = () => (
-    <View style={styles.header}>
-      <View style={styles.headerContent}>
-        <Text style={styles.title}>
-          Forever<Text style={styles.titleGreen}>green</Text>
-        </Text>
-        <Text style={styles.subtitle}>Carbon Credits</Text>
-        <Text style={styles.description}>
-          Click on a project to learn more or purchase
-        </Text>
-      </View>
-      <TouchableOpacity
-        style={styles.cartContainer}
-        onPress={() => router.navigate("/shopping-cart")}
-      >
-        <Icon name="shopping-cart" size={24} color="white" />
-        {numItems > 0 && (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>
-              {numItems < 10 ? numItems : "9+"}
-            </Text>
-          </View>
-        )}
-      </TouchableOpacity>
-    </View>
+    <>
+      <PageHeader
+        subtitle="Carbon Credits"
+        description="Click on a project to learn more or purchase"
+      />
+      <ShoppingCartBtn numItems={numItems} />
+      <CoinBalance numCoins={balance || undefined} />
+    </>
   );
 
   const renderFooter = () => (
     <>
-      {selectedProject && <ProjectCard project={selectedProject} />}
-
+      <View style={styles.projectContainer}>
+        {selectedProject && <ProjectCard project={selectedProject} />}
+      </View>
       <View style={styles.footer}>
         <Text style={styles.footerTitle}>Carbon Credit Subscription</Text>
         <Text style={styles.footerText}>
@@ -118,34 +113,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "white",
   },
-  header: {
-    padding: 24,
-  },
-  headerContent: {
-    alignItems: "center",
-    marginTop: 32,
-  },
-  title: {
-    fontSize: 48,
-    fontWeight: "bold",
-  },
-  titleGreen: {
-    color: "#409858",
-  },
-  subtitle: {
-    fontSize: 30,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 12,
-  },
-  description: {
-    fontSize: 18,
-    textAlign: "center",
+  projectContainer: {
+    padding: 16,
   },
   footer: {
     backgroundColor: "#f3f4f6",
     borderRadius: 16,
     padding: 16,
+    marginHorizontal: 16,
     marginBottom: 24,
   },
   footerTitle: {
@@ -176,32 +151,9 @@ const styles = StyleSheet.create({
   columnWrapper: {
     justifyContent: "space-between",
     paddingVertical: 30,
-  },
-  flatList: {
     paddingHorizontal: 16,
   },
-  cartContainer: {
-    position: "absolute",
-    top: 65,
-    right: 0,
-    padding: 10,
-    backgroundColor: "#409858",
-    borderRadius: 9999,
-  },
-  badge: {
-    position: "absolute",
-    right: 0,
-    top: 0,
-    backgroundColor: "red",
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  badgeText: {
-    color: "white",
-    fontSize: 12,
-    fontWeight: "bold",
+  flatList: {
+    paddingHorizontal: 0,
   },
 });

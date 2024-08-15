@@ -15,7 +15,7 @@ export default function CommerceLayout() {
       {/* <Stack.Screen name="subscriptions-settings" /> */}
       <Stack.Screen name="shopping-cart" />
       <Stack.Screen name="fg-coins" />
-      {/* <Stack.Screen name="confirmation" /> */}
+      <Stack.Screen name="purchase-complete" />
     </Stack>
   );
 }

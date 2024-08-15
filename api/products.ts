@@ -133,3 +133,9 @@ export const fetchCredits = async () => {
   ];
   return credits;
 };
+
+export const fetchTrees = async () => {
+  // todo: Fetch trees from API
+}
+
+

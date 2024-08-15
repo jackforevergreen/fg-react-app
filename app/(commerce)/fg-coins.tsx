@@ -1,25 +1,87 @@
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  Alert,
 } from "react-native";
 import { Image } from "expo-image";
 import { FGCoin } from "@/constants/Images";
 import { PageHeader, BackButton } from "@/components/common";
 import { LinearGradient } from "expo-linear-gradient";
-
-const coinOptions = [
-  { coins: 100, price: 10.0 },
-  { coins: 200, price: 20.0 },
-  { coins: 400, price: 40.0 },
-  { coins: 600, price: 60.0 },
-  { coins: 800, price: 80.0 },
-  { coins: 1000, price: 100.0 },
-];
+import {
+  fetchCoinsOptions,
+  purchaseFgCoins,
+  getFgCoinsBalance,
+} from "@/api/coins";
+import { CoinBalance } from "@/components/CoinBalance";
+import { getAuth } from "firebase/auth";
+import { router } from "expo-router";
 
 const ForevergreenCoins = () => {
+  const [coinOptions, setCoinOptions] = useState<
+    { coins: number; price: number }[]
+  >([]);
+  const [fgCoinsBalance, setFgCoinsBalance] = useState<number | null>(0);
+  const [loading, setLoading] = useState(true);
+  const auth = getAuth();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const coins = await fetchCoinsOptions();
+        setCoinOptions(coins);
+
+        const fgCoins = await getFgCoinsBalance(auth.currentUser?.uid || "");
+        setFgCoinsBalance(fgCoins);
+      } catch (error: any) {
+        console.error("Error fetching coin options");
+        Alert.alert("Error", "Failed to load data. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [auth.currentUser?.uid]);
+
+  const handlePurchase = async (coins: number, price: number) => {
+    try {
+      const success = await purchaseFgCoins(
+        auth.currentUser?.uid || "",
+        coins,
+        "credit_card"
+      ); // Assuming credit card as payment method
+      if (success) {
+        Alert.alert("Success", `You have purchased ${coins} FG Coins!`);
+        const newBalance = await getFgCoinsBalance(auth.currentUser?.uid || "");
+        setFgCoinsBalance(newBalance);
+        router.push({
+          pathname: "purchase-complete",
+          params: { numCoins: coins },
+        });
+      } else {
+        Alert.alert("Error", "Purchase failed. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error purchasing coins:", error);
+      Alert.alert(
+        "Error",
+        "An error occurred during purchase. Please try again."
+      );
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <PageHeader
@@ -27,6 +89,7 @@ const ForevergreenCoins = () => {
         description="Buy Coins to Spend on Forevergreen Products"
       />
       <BackButton />
+      <CoinBalance numCoins={fgCoinsBalance || undefined} />
       <ScrollView>
         {coinOptions.map((option, index) => (
           <View key={index} style={styles.coinOption}>
@@ -46,7 +109,10 @@ const ForevergreenCoins = () => {
                 </View>
                 <Text style={styles.coinPrice}>${option.price.toFixed(2)}</Text>
               </View>
-              <TouchableOpacity style={styles.buyButton}>
+              <TouchableOpacity
+                style={styles.buyButton}
+                onPress={() => handlePurchase(option.coins, option.price)}
+              >
                 <Text style={styles.buyButtonText}>Buy Now</Text>
               </TouchableOpacity>
             </View>
@@ -57,11 +123,14 @@ const ForevergreenCoins = () => {
   );
 };
 
+export default ForevergreenCoins;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
-    padding: 20,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   header: {
     flexDirection: "row",
@@ -160,5 +229,3 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
 });
-
-export default ForevergreenCoins;

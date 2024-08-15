@@ -1,17 +1,21 @@
 import { View, Text, StyleSheet } from "react-native";
 
 export const PageHeader = ({
+  title = "Forever",
+  titleAlt = "green",
   subtitle,
   description,
 }: {
-  subtitle: string;
-  description: string;
+  title?: string;
+  titleAlt?: string;
+  subtitle?: string;
+  description?: string;
 }) => {
   return (
     <View style={styles.header}>
       <View style={styles.headerContent}>
         <Text style={styles.title}>
-          Forever<Text style={styles.titleGreen}>green</Text>
+          {title}<Text style={styles.titleGreen}>{titleAlt}</Text>
         </Text>
         <Text style={styles.subtitle}>{subtitle}</Text>
         <Text style={styles.description}>{description}</Text>
@@ -35,6 +39,8 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 36,
     fontWeight: "bold",
+    textAlign: "center",
+    maxWidth: 256,
   },
   titleGreen: {
     color: "#409858",
