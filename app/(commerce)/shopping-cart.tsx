@@ -5,26 +5,27 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
+  Alert,
 } from "react-native";
 import { Image } from "expo-image";
-import { FGCoin } from "@/constants/Images";
-import { useCart } from "@/contexts";
-import { CartItem } from "@/types";
 import { LinearGradient } from "expo-linear-gradient";
 import Icon from "react-native-vector-icons/Feather";
+import { getAuth } from "firebase/auth";
+import { FgCoin } from "@/constants/Images";
+import { useCart } from "@/contexts";
+import { clearCart } from "@/api/cart";
+import { CartItem } from "@/types";
 import { router } from "expo-router";
 import { PageHeader, BackButton } from "@/components/common";
-import { getFgCoinsBalance } from "@/api/coins";
-import { getAuth } from "firebase/auth";
 import { CoinBalance } from "@/components/CoinBalance";
+import { getFgCoinsBalance, purchaseCarbonCredits } from "@/api/coins";
 
 export default function ShoppingCartScreen() {
   const { items, getCartTotal, incrementQuantity, decrementQuantity } =
     useCart();
-
+  const auth = getAuth();
   const [balance, setBalance] = useState<number | null>(0);
   const [loading, setLoading] = useState(true);
-  const auth = getAuth();
 
   useEffect(() => {
     const fetchBalance = async () => {
@@ -35,6 +36,50 @@ export default function ShoppingCartScreen() {
 
     fetchBalance();
   }, [auth]);
+
+  const handlePurchase = async () => {
+    if (!balance || balance < getCartTotal()) {
+      Alert.alert(
+        "Insufficient Balance",
+        "You don't have enough FG Coins. Would you like to buy more?",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Buy FG Coins", onPress: () => router.navigate("fg-coins") },
+        ]
+      );
+      return;
+    }
+
+    try {
+      const result = await purchaseCarbonCredits(
+        auth.currentUser?.uid || "",
+        items
+      );
+
+      if (result.success) {
+        clearCart();
+        const newBalance = await getFgCoinsBalance(auth.currentUser?.uid || "");
+        setBalance(newBalance);
+
+        Alert.alert(
+          "Purchase Successful",
+          "Your carbon credits have been added to your account."
+        );
+        router.push({
+          pathname: "purchase-complete",
+          params: { transactionId: result.transactionId },
+        });
+      } else {
+        throw new Error("Purchase failed");
+      }
+    } catch (error) {
+      console.error("Error during purchase:", error);
+      Alert.alert(
+        "Purchase Failed",
+        "There was an error processing your purchase. Please try again."
+      );
+    }
+  };
 
   const renderItem = ({ item }: { item: CartItem }) => (
     <View style={styles.itemContainer}>
@@ -67,7 +112,7 @@ export default function ShoppingCartScreen() {
         </View>
       </View>
       <View style={styles.priceContainer}>
-        <Image source={FGCoin} style={styles.coinImage} />
+        <Image source={FgCoin} style={styles.coinImage} />
         <Text style={styles.itemPrice}>{item.price * item.quantity}</Text>
       </View>
     </View>
@@ -89,7 +134,7 @@ export default function ShoppingCartScreen() {
         subtitle="Shopping Cart"
         description="Make a Positive Impact on the Environment Today!"
       />
-      <BackButton />
+      <BackButton link={"carbon-credit"} />
       <CoinBalance />
 
       <View style={styles.creditList}>
@@ -104,29 +149,20 @@ export default function ShoppingCartScreen() {
         <View style={styles.totalContainer}>
           <Text style={styles.totalLabel}>Total:</Text>
           <View style={styles.totalValue}>
-            <Image source={FGCoin} style={styles.coinImage} />
+            <Image source={FgCoin} style={styles.coinImage} />
             <Text style={styles.totalValueText}>{getCartTotal()}</Text>
           </View>
         </View>
-        {balance && balance >= getCartTotal() ? (
-          <TouchableOpacity
-            style={styles.purchaseButton}
-            onPress={() => router.navigate("fg-coins")}
-          >
-            <Text style={styles.purchaseButtonText}>
-              Buy Now with Forevergreen Coins
-            </Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={styles.purchaseButton}
-            onPress={() => router.navigate("fg-coins")}
-          >
-            <Text style={styles.purchaseButtonAltText}>
-              Not Enough Forevergreen Coins. Buy now?
-            </Text>
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity
+          style={styles.purchaseButton}
+          onPress={handlePurchase}
+        >
+          <Text style={styles.purchaseButtonText}>
+            {balance && balance >= getCartTotal()
+              ? "Buy Now with Forevergreen Coins"
+              : "Not Enough Forevergreen Coins. Buy now?"}
+          </Text>
+        </TouchableOpacity>
         <TouchableOpacity
           style={styles.continueButton}
           onPress={() => router.navigate("carbon-credit")}
@@ -201,11 +237,6 @@ const styles = StyleSheet.create({
   purchaseButtonText: {
     color: "#fff",
     fontSize: 20,
-    fontWeight: "bold",
-  },
-  purchaseButtonAltText: {
-    color: "#fff",
-    fontSize: 16,
     fontWeight: "bold",
   },
   continueButton: {

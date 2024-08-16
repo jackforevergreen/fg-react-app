@@ -9,7 +9,7 @@ import {
 import { Image } from "expo-image";
 import Icon from "react-native-vector-icons/Feather";
 import { CarbonCredit } from "@/types";
-import { FGCoin } from "@/constants/Images";
+import { FgCoin } from "@/constants/Images";
 import { useCart } from "@/contexts";
 
 const ProjectCard: React.FC<{ project: CarbonCredit }> = ({ project }) => {
@@ -88,7 +88,7 @@ const ProjectCard: React.FC<{ project: CarbonCredit }> = ({ project }) => {
 
         <View style={styles.priceContainer}>
           <View style={styles.coinContainer}>
-            <Image source={FGCoin} style={styles.coinImage} />
+            <Image source={FgCoin} style={styles.coinImage} />
             <Text style={styles.priceText}>{project.price * quantity}</Text>
           </View>
           <View style={styles.perTonContainer}>
@@ -121,7 +121,7 @@ const ProjectCard: React.FC<{ project: CarbonCredit }> = ({ project }) => {
       <View style={styles.totalContainer}>
         <Text style={styles.totalText}>Total:</Text>
         <View style={styles.totalPriceContainer}>
-          <Image source={FGCoin} style={styles.coinImage} />
+          <Image source={FgCoin} style={styles.coinImage} />
           <Text style={styles.totalPriceText}>{project.price * quantity}</Text>
         </View>
         <TouchableOpacity

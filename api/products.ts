@@ -33,6 +33,7 @@ export const fetchCredits = async () => {
         },
       ],
       CTA: "Embrace a greener future today with Forevergreen Sustainable Community Carbon Credits.",
+      type: "Energy",
     },
     {
       id: "cc_cer_hy_idn_0007096",
@@ -65,6 +66,7 @@ export const fetchCredits = async () => {
         },
       ],
       CTA: "Embrace a greener future today with Forevergreen Hydroelectric Carbon Credits.",
+      type: "Hydro",
     },
     {
       id: "cc_bcr_ar_col_26114001",
@@ -97,6 +99,7 @@ export const fetchCredits = async () => {
         },
       ],
       CTA: "Embrace a greener future today with Forevergreen Reforestation Carbon Credits",
+      type: "Reforestation",
     },
     {
       id: "cc_vcs_rf_bra_0001112",
@@ -129,6 +132,7 @@ export const fetchCredits = async () => {
         },
       ],
       CTA: "Embrace a greener future today with Forevergreen Forestry Carbon Credits.",
+      type: "Reforestation",
     },
   ];
   return credits;
@@ -136,6 +140,4 @@ export const fetchCredits = async () => {
 
 export const fetchTrees = async () => {
   // todo: Fetch trees from API
-}
-
-
+};

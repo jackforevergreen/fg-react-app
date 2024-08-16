@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Text, Pressable, StyleSheet } from "react-native";
 import { router } from "expo-router";
 import { Image } from "expo-image";
-import { FGCoin } from "@/constants/Images";
+import { FgCoin } from "@/constants/Images";
 import { getAuth } from "firebase/auth";
 import { getFgCoinsBalance } from "@/api/coins";
 
@@ -34,7 +34,7 @@ export const CoinBalance = ({ numCoins }: { numCoins?: number }) => {
       onPress={() => router.navigate("fg-coins")}
       hitSlop={24}
     >
-      <Image source={FGCoin} style={styles.coinImage} />
+      <Image source={FgCoin} style={styles.coinImage} />
       {/* todo: add cool loading skeleton */}
       <Text style={styles.text}>{loading ? "..." : balance}</Text>
     </Pressable>

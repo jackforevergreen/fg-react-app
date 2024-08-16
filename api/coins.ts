@@ -7,10 +7,12 @@ import {
   runTransaction,
   collection,
   serverTimestamp,
+  addDoc,
 } from "firebase/firestore";
+import { CartItem } from "@/types";
 
 // Placeholder for fetching the available coins options
-export const fetchCoinsOptions = async () => {
+const fetchFgCoinsOptions = async () => {
   const coinsOptions = [
     { coins: 100, price: 10.0 },
     { coins: 200, price: 20.0 },
@@ -23,7 +25,7 @@ export const fetchCoinsOptions = async () => {
 };
 
 // Update the user's fg-coins balance
-export const updateFgCoinsBalance = async (userId: string, amount: number) => {
+const updateFgCoinsBalance = async (userId: string, amount: number) => {
   const db = getFirestore();
   const userDocRef = doc(db, "users", userId);
   await updateDoc(userDocRef, {
@@ -32,74 +34,106 @@ export const updateFgCoinsBalance = async (userId: string, amount: number) => {
 };
 
 // Purchase fg-coins
-export const purchaseFgCoins = async (
+const purchaseFgCoins = async (
   userId: string,
   amount: number,
   paymentMethod: string
 ) => {
+  const db = getFirestore();
+  const userDocRef = doc(db, "users", userId);
+
   try {
     // Implement your payment processing logic here
     // This is a placeholder for the actual payment processing
     const paymentSuccessful = await processPayment(amount, paymentMethod);
 
     if (paymentSuccessful) {
-      await updateFgCoinsBalance(userId, amount);
-      return true;
+      // Update user's fg-coins balance
+      await updateDoc(userDocRef, {
+        fgCoins: increment(amount),
+      });
+
+      // Create a new document in the transactions sub-collection
+      const transactionRef = collection(userDocRef, "transactions");
+      const newTransactionDoc = await addDoc(transactionRef, {
+        type: "fgcoins_purchase",
+        userId: userId,
+        amount: amount,
+        paymentMethod: paymentMethod,
+        timestamp: serverTimestamp(),
+      });
+
+      return { success: true, transactionId: newTransactionDoc.id };
     } else {
-      throw new Error("Payment failed");
+      return { success: false, transactionId: null };
     }
   } catch (error) {
     console.error("Error purchasing fg-coins:", error);
-    return false;
+    return { success: false, transactionId: null };
   }
 };
 
 // Purchase carbon credits using fg-coins
-export const purchaseCarbonCredits = async (
-  userId: string,
-  fgCoinsAmount: number,
-  carbonCreditsAmount: number
-) => {
+const purchaseCarbonCredits = async (userId: string, cartItems: CartItem[]) => {
   const db = getFirestore();
   const userDocRef = doc(db, "users", userId);
 
   try {
-    // Start a transaction to ensure data consistency
-    await runTransaction(db, async (transaction) => {
+    const result = await runTransaction(db, async (transaction) => {
       const userDoc = await transaction.get(userDocRef);
-      const currentBalance = userDoc.data()?.fgCoins;
+      const currentBalance = userDoc.data()?.fgCoins || 0;
 
-      if (currentBalance < fgCoinsAmount) {
+      const totalCost = cartItems.reduce(
+        (total, item) => total + item.price * item.quantity,
+        0
+      );
+
+      if (currentBalance < totalCost) {
         throw new Error("Insufficient fg-coins balance");
       }
 
-      // Deduct fg-coins and add carbon credits
+      // Deduct total fg-coins
       transaction.update(userDocRef, {
-        fgCoins: increment(-fgCoinsAmount),
-        carbonCredits: increment(carbonCreditsAmount),
+        fgCoins: increment(-totalCost),
       });
 
-      // Create a separate collection for carbon credit transactions
-      const carbonCreditTransactionRef = doc(
-        collection(db, "carbonCreditTransactions")
-      );
-      transaction.set(carbonCreditTransactionRef, {
-        userId: userId,
-        fgCoinsSpent: fgCoinsAmount,
-        carbonCreditsReceived: carbonCreditsAmount,
-        timestamp: serverTimestamp(),
+      // Update each carbon credit type
+      cartItems.forEach((item) => {
+        transaction.update(userDocRef, {
+          [`carbonCredits.${item.type}`]: increment(item.quantity),
+        });
       });
+
+      // Create a single transaction document for all purchases
+      const transactionRef = doc(collection(userDocRef, "transactions"));
+      const transactionData = {
+        type: "carbon_credit_purchase",
+        userId: userId,
+        fgCoinsSpent: totalCost,
+        items: cartItems.map((item) => ({
+          carbonCreditName: item.name,
+          carbonCreditType: item.type,
+          carbonCreditColors: item.colors,
+          carbonCreditImage: item.image,
+          quantity: item.quantity,
+          unitPrice: item.price,
+        })),
+        timestamp: serverTimestamp(),
+      };
+      transaction.set(transactionRef, transactionData);
+
+      return { success: true, transactionId: transactionRef.id };
     });
 
-    return true;
+    return result;
   } catch (error) {
     console.error("Error purchasing carbon credits:", error);
-    return false;
+    return { success: false, transactionId: null };
   }
 };
 
 // Get the user's current fg-coins balance
-export const getFgCoinsBalance = async (userId: string) => {
+const getFgCoinsBalance = async (userId: string) => {
   const db = getFirestore();
   const userDocRef = doc(db, "users", userId);
   const userDoc = await getDoc(userDocRef);
@@ -107,7 +141,7 @@ export const getFgCoinsBalance = async (userId: string) => {
 };
 
 // Get the user's carbon credits balance
-export const getCarbonCreditsBalance = async (userId: string) => {
+const getCarbonCreditsBalance = async (userId: string) => {
   const db = getFirestore();
   const userDocRef = doc(db, "users", userId);
   const userDoc = await getDoc(userDocRef);
@@ -115,12 +149,22 @@ export const getCarbonCreditsBalance = async (userId: string) => {
 };
 
 // Get the user's transaction history
-export const getTransactionHistory = async (userId: string) => {
+const getTransactionHistory = async (userId: string) => {
   // Todo: Implement fetching transaction history (probably with RevenueCat)
 };
 
 // Remember to implement the actual payment processing function
-export const processPayment = async (amount: number, paymentMethod: string) => {
+const processPayment = async (amount: number, paymentMethod: string) => {
   // Placeholder for the actual payment processing logic
   return true;
+};
+
+export {
+  fetchFgCoinsOptions,
+  updateFgCoinsBalance,
+  purchaseFgCoins,
+  purchaseCarbonCredits,
+  getFgCoinsBalance,
+  getCarbonCreditsBalance,
+  getTransactionHistory,
 };

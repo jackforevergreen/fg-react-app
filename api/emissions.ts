@@ -90,5 +90,5 @@ export const calculateEmissions = (data: EmissionsData) => {
     totalData,
   } = data;
 
-  
+  // todo: calculate emissions for each category
 };

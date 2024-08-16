@@ -25,11 +25,7 @@ import { fetchEmissionsData } from "./emissions";
 import { sendWelcomeEmail } from "./email";
 
 /* Function to sign up the user with the email and password */
-export const onSignup = async (
-  email: string,
-  password: string,
-  name: string
-) => {
+const onSignup = async (email: string, password: string, name: string) => {
   const db = getFirestore();
   const auth = getAuth();
 
@@ -96,7 +92,7 @@ export const onSignup = async (
   }
 };
 
-export const onGoogleSignUp = async () => {
+const onGoogleSignUp = async () => {
   try {
     await GoogleSignin.hasPlayServices();
     const user = await GoogleSignin.signIn();
@@ -153,7 +149,7 @@ export const onGoogleSignUp = async () => {
   }
 };
 
-export const onContinueAnonymously = async () => {
+const onContinueAnonymously = async () => {
   const auth = getAuth();
 
   try {
@@ -163,9 +159,6 @@ export const onContinueAnonymously = async () => {
     const db = getFirestore();
     const userDocRef = doc(db, "users", user.uid);
     await setDoc(userDocRef, {
-      name: "Guest User",
-      email: null,
-      photoURL: null,
       createdAt: serverTimestamp(),
       isAnonymous: true,
     });
@@ -188,7 +181,7 @@ export const onContinueAnonymously = async () => {
 };
 
 /* Function to sign up the user with the email and password */
-export const onLogin = (email: string, password: string) => {
+const onLogin = (email: string, password: string) => {
   const auth = getAuth();
   signInWithEmailAndPassword(auth, email, password)
     .then((userCredential) => {
@@ -211,7 +204,7 @@ export const onLogin = (email: string, password: string) => {
     });
 };
 
-export const onGoogleLogin = async () => {
+const onGoogleLogin = async () => {
   try {
     await GoogleSignin.hasPlayServices();
     const user = await GoogleSignin.signIn();
@@ -245,7 +238,7 @@ export const onGoogleLogin = async () => {
   }
 };
 
-export const handleLogout = () => {
+const handleLogout = () => {
   const auth = getAuth();
 
   Alert.alert("Logout", "Are you sure you want to logout?", [
@@ -269,7 +262,7 @@ export const handleLogout = () => {
   ]);
 };
 
-export const handleResetPassword = (email: string) => {
+const handleResetPassword = (email: string) => {
   const auth = getAuth();
   if (email.trim() === "") {
     Alert.alert("Error", "Please enter your email address.");
@@ -293,4 +286,14 @@ export const handleResetPassword = (email: string) => {
       Alert.alert("Error", `Failed to send reset email: ${errorMessage}`);
       console.log(`Error: Failed to send reset email: ${errorMessage}`);
     });
+};
+
+export {
+  onSignup,
+  onGoogleSignUp,
+  onContinueAnonymously,
+  onLogin,
+  onGoogleLogin,
+  handleLogout,
+  handleResetPassword,
 };

@@ -8,11 +8,11 @@ import {
   Alert,
 } from "react-native";
 import { Image } from "expo-image";
-import { FGCoin } from "@/constants/Images";
+import { FgCoin } from "@/constants/Images";
 import { PageHeader, BackButton } from "@/components/common";
 import { LinearGradient } from "expo-linear-gradient";
 import {
-  fetchCoinsOptions,
+  fetchFgCoinsOptions,
   purchaseFgCoins,
   getFgCoinsBalance,
 } from "@/api/coins";
@@ -31,7 +31,7 @@ const ForevergreenCoins = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const coins = await fetchCoinsOptions();
+        const coins = await fetchFgCoinsOptions();
         setCoinOptions(coins);
 
         const fgCoins = await getFgCoinsBalance(auth.currentUser?.uid || "");
@@ -49,18 +49,20 @@ const ForevergreenCoins = () => {
 
   const handlePurchase = async (coins: number, price: number) => {
     try {
-      const success = await purchaseFgCoins(
+      const result = await purchaseFgCoins(
         auth.currentUser?.uid || "",
         coins,
         "credit_card"
-      ); // Assuming credit card as payment method
-      if (success) {
+      );
+      if (result.success) {
         Alert.alert("Success", `You have purchased ${coins} FG Coins!`);
         const newBalance = await getFgCoinsBalance(auth.currentUser?.uid || "");
         setFgCoinsBalance(newBalance);
         router.push({
           pathname: "purchase-complete",
-          params: { numCoins: coins },
+          params: {
+            transactionId: result.transactionId, // Pass the transaction ID
+          },
         });
       } else {
         Alert.alert("Error", "Purchase failed. Please try again.");
@@ -99,12 +101,12 @@ const ForevergreenCoins = () => {
               end={{ x: 0.5, y: 1 }}
               style={styles.gradient}
             >
-              <Image source={FGCoin} style={styles.bigCoinImage} />
+              <Image source={FgCoin} style={styles.bigCoinImage} />
             </LinearGradient>
             <View style={styles.coinInfo}>
               <View style={styles.coinDetails}>
                 <View style={styles.coinAmountWrapper}>
-                  <Image source={FGCoin} style={styles.smallCoinImage} />
+                  <Image source={FgCoin} style={styles.smallCoinImage} />
                   <Text style={styles.coinAmount}>{option.coins}</Text>
                 </View>
                 <Text style={styles.coinPrice}>${option.price.toFixed(2)}</Text>

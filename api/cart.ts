@@ -9,6 +9,7 @@ import {
 import { getAuth } from "firebase/auth";
 import { CarbonCredit } from "@/types";
 
+// Get the cart reference for the current user
 const getCartRef = () => {
   const auth = getAuth();
   const db = getFirestore();
@@ -19,6 +20,8 @@ const getCartRef = () => {
   throw new Error("User is not authenticated");
 };
 
+// Add an item to the cart
+// todo: make this work with tree planting
 export const addToCart = async (item: CarbonCredit, quantity: number = 1) => {
   const cartRef = getCartRef();
   const cartDoc = await getDoc(cartRef);
@@ -39,6 +42,8 @@ export const addToCart = async (item: CarbonCredit, quantity: number = 1) => {
   await setDoc(cartRef, { items }, { merge: true });
 };
 
+// Remove an item from the cart
+// todo: make this work with tree planting
 export const removeFromCart = async (itemId: CarbonCredit["id"]) => {
   const cartRef = getCartRef();
   const cartDoc = await getDoc(cartRef);
@@ -51,12 +56,14 @@ export const removeFromCart = async (itemId: CarbonCredit["id"]) => {
   }
 };
 
+// Get the cart items
 export const getCart = async () => {
   const cartRef = getCartRef();
   const cartDoc = await getDoc(cartRef);
   return cartDoc.data()?.items || [];
 };
 
+// Clear the cart
 export const clearCart = async () => {
   const cartRef = getCartRef();
   await updateDoc(cartRef, { items: [] });

@@ -3,9 +3,11 @@ import { Text, Pressable, StyleSheet } from "react-native";
 import Icon from "react-native-vector-icons/Feather";
 import { router } from "expo-router";
 
-export const BackButton = () => {
+export const BackButton = ({ link }: { link?: string }) => {
   const navigate = () => {
-    if (router.canGoBack()) {
+    if (link) {
+      router.replace(link);
+    } else if (router.canGoBack()) {
       router.back();
     } else {
       router.replace("/");
