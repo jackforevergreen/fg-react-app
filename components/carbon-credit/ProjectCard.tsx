@@ -9,14 +9,13 @@ import {
 import { Image } from "expo-image";
 import Icon from "react-native-vector-icons/Feather";
 import { CarbonCredit } from "@/types";
-import { FgCoin } from "@/constants/Images";
-import { useCart } from "@/contexts";
+import { addToCart } from "@/api/cart";
+import { formatPrice } from "@/utils/format";
 
 const ProjectCard: React.FC<{ project: CarbonCredit }> = ({ project }) => {
   const [quantity, setQuantity] = useState(1);
   const [currentPage, setCurrentPage] = useState(0);
   const [expanded, setExpanded] = useState(false);
-  const { addToCart } = useCart();
 
   const toggleExpanded = useCallback(() => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -48,7 +47,7 @@ const ProjectCard: React.FC<{ project: CarbonCredit }> = ({ project }) => {
   const handleAddToCart = useCallback(() => {
     addToCart(project, quantity);
     setQuantity(1);
-  }, [addToCart, project, quantity]);
+  }, [project, quantity]);
 
   if (!project) return null;
 
@@ -88,8 +87,7 @@ const ProjectCard: React.FC<{ project: CarbonCredit }> = ({ project }) => {
 
         <View style={styles.priceContainer}>
           <View style={styles.coinContainer}>
-            <Image source={FgCoin} style={styles.coinImage} />
-            <Text style={styles.priceText}>{project.price * quantity}</Text>
+            <Text style={styles.priceText}>{formatPrice(project.price * quantity)}</Text>
           </View>
           <View style={styles.perTonContainer}>
             <Text style={styles.perTonText}>per ton</Text>
@@ -121,8 +119,7 @@ const ProjectCard: React.FC<{ project: CarbonCredit }> = ({ project }) => {
       <View style={styles.totalContainer}>
         <Text style={styles.totalText}>Total:</Text>
         <View style={styles.totalPriceContainer}>
-          <Image source={FgCoin} style={styles.coinImage} />
-          <Text style={styles.totalPriceText}>{project.price * quantity}</Text>
+          <Text style={styles.totalPriceText}>{formatPrice(project.price * quantity)}</Text>
         </View>
         <TouchableOpacity
           style={styles.addToCartButton}
@@ -198,10 +195,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-  },
-  coinImage: {
-    height: 24,
-    width: 24,
   },
   priceText: {
     fontSize: 24,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,26 +10,18 @@ import {
 import CreditItem from "@/components/carbon-credit/CreditItem";
 import ProjectCard from "@/components/carbon-credit/ProjectCard";
 import { fetchCredits } from "@/api/products";
-import { CarbonCredit } from "@/types";
-import { useCart } from "@/contexts";
+import { CarbonCredit, CartItem } from "@/types";
+import { subscribeToCart } from "@/api/cart";
 import { PageHeader } from "@/components/common";
-import { CoinBalance } from "@/components/CoinBalance";
 import { ShoppingCartBtn } from "@/components/ShoppingCartBtn";
-import { getAuth } from "firebase/auth";
-import { getFgCoinsBalance } from "@/api/coins";
 
 export default function CarbonCreditScreen() {
-  const auth = getAuth();
-  const { items } = useCart();
-
   const [selectedProject, setSelectedProject] = useState<CarbonCredit | null>(
     null
   );
   const [credits, setCredits] = useState<CarbonCredit[]>([]);
   const [loading, setLoading] = useState(true);
-  const [balance, setBalance] = useState<number | null>(0);
-
-  const numItems = items.reduce((total, item) => total + item.quantity, 0);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
   useEffect(() => {
     setLoading(true);
@@ -39,13 +31,20 @@ export default function CarbonCreditScreen() {
         setCredits(result as CarbonCredit[]);
         setSelectedProject(result[0] as CarbonCredit);
       }
-
-      const coins = await getFgCoinsBalance(auth.currentUser?.uid || "");
-      setBalance(coins);
     };
     initializeData();
-    setLoading(false);
+
+    // Subscribe to cart changes
+    const unsubscribe = subscribeToCart((items) => {
+      setCartItems(items);
+      setLoading(false);
+    });
+
+    // Cleanup subscription on component unmount
+    return () => unsubscribe();
   }, []);
+
+  const numItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
   const renderCreditItem = ({ item }: { item: CarbonCredit }) => (
     <CreditItem
@@ -64,7 +63,6 @@ export default function CarbonCreditScreen() {
         description="Click on a project to learn more or purchase"
       />
       <ShoppingCartBtn numItems={numItems} />
-      <CoinBalance numCoins={balance || undefined} />
     </>
   );
 
@@ -88,6 +86,7 @@ export default function CarbonCreditScreen() {
     </>
   );
 
+  // todo: replace with loading component
   if (loading) {
     return <Text>Loading...</Text>;
   }

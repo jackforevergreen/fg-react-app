@@ -10,7 +10,6 @@ import { initializeAuth } from "firebase/auth";
 import { getReactNativePersistence } from "@firebase/auth/dist/rn/index.js";
 import { getFirestore } from "firebase/firestore";
 import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
-import { CartProvider } from "@/contexts";
 
 // Initialize Firebase
 const firebaseConfig = {
@@ -31,7 +30,6 @@ if (!getApps().length) {
   });
   getFirestore(app);
 }
-
 
 // import Purchases, { LOG_LEVEL } from "react-native-purchases";
 // import { Platform } from "react-native";
@@ -73,17 +71,15 @@ export default function RootLayout() {
 
   return (
     <PaperProvider>
-      <CartProvider>
-        <Stack
-          screenOptions={{
-            // Hide the header for all other routes.
-            headerShown: false,
-          }}
-        >
-          <Stack.Screen name="+not-found" />
-          <Stack.Screen name="index" />
-        </Stack>
-      </CartProvider>
+      <Stack
+        screenOptions={{
+          // Hide the header for all other routes.
+          headerShown: false,
+        }}
+      >
+        <Stack.Screen name="+not-found" />
+        <Stack.Screen name="index" />
+      </Stack>
     </PaperProvider>
   );
 }

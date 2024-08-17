@@ -21,7 +21,7 @@ interface EmissionsData {
   };
 }
 
-export const saveEmissionsData = async (data: EmissionsData) => {
+const saveEmissionsData = async (data: EmissionsData) => {
   const auth = getAuth();
   const db = getFirestore();
 
@@ -46,14 +46,13 @@ export const saveEmissionsData = async (data: EmissionsData) => {
       },
       { merge: true }
     );
-    console.log("Emissions data saved successfully");
   } catch (error) {
     console.error("Error saving emissions data:", error);
     throw error;
   }
 };
 
-export const fetchEmissionsData = async (month?: string, userId?: string) => {
+const fetchEmissionsData = async (month?: string, userId?: string) => {
   const auth = getAuth();
   const db = getFirestore();
 
@@ -82,13 +81,10 @@ export const fetchEmissionsData = async (month?: string, userId?: string) => {
   }
 };
 
-export const calculateEmissions = (data: EmissionsData) => {
-  const {
-    energyData,
-    transportationData,
-    dietData,
-    totalData,
-  } = data;
+const calculateEmissions = (data: EmissionsData) => {
+  const { energyData, transportationData, dietData, totalData } = data;
 
   // todo: calculate emissions for each category
 };
+
+export { saveEmissionsData, fetchEmissionsData };

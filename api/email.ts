@@ -1,7 +1,7 @@
 import { getFirestore, collection, addDoc } from "firebase/firestore";
 
 // Function to send a generic email by adding a document to the 'mail' collection
-export const sendEmail = async (
+const sendEmail = async (
   to: string[],
   subject: string,
   text: string,
@@ -18,7 +18,6 @@ export const sendEmail = async (
         html,
       },
     });
-    console.log("Email document added successfully");
   } catch (error) {
     console.error("Error adding email document:", error);
     throw error;
@@ -26,10 +25,7 @@ export const sendEmail = async (
 };
 
 // Function to send welcome email
-export const sendWelcomeEmail = async (
-  email: string,
-  name: string
-): Promise<void> => {
+const sendWelcomeEmail = async (email: string, name: string): Promise<void> => {
   const subject = "Welcome to Our App!";
   const text = `Hello ${name},\n\nWelcome to our app! We're excited to have you on board.\n\nBest regards,\nThe App Team`;
   const html = `
@@ -43,7 +39,7 @@ export const sendWelcomeEmail = async (
 };
 
 // Function to send account deletion email
-export const sendAccountDeletionEmail = async (
+const sendAccountDeletionEmail = async (
   email: string,
   name: string
 ): Promise<void> => {
@@ -59,3 +55,5 @@ export const sendAccountDeletionEmail = async (
 
   await sendEmail([email], subject, text, html);
 };
+
+export { sendEmail, sendWelcomeEmail, sendAccountDeletionEmail };

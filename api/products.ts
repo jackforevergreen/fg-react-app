@@ -1,6 +1,6 @@
 import { CarbonCredit } from "@/types";
 
-export const fetchCredits = async () => {
+const fetchCredits = async () => {
   const credits: CarbonCredit[] = [
     {
       id: "cc_vcs_ew_can_0000929",
@@ -8,7 +8,7 @@ export const fetchCredits = async () => {
       image:
         "https://firebasestorage.googleapis.com/v0/b/fg-react-app.appspot.com/o/carbonCredits%2Fcanadian-energy-and-waste.png?alt=media&token=b9317997-bce5-4458-9b82-b53de0b6bb27",
       colors: ["#FEF1AD", "#D2C78D", "#F4CD43"],
-      price: 100,
+      price: 1000,
       details: [
         {
           title: "Project Overview",
@@ -41,7 +41,7 @@ export const fetchCredits = async () => {
       image:
         "https://firebasestorage.googleapis.com/v0/b/fg-react-app.appspot.com/o/carbonCredits%2Fpanoma-hydroelectric.png?alt=media&token=aaf69562-8d24-4671-a1af-001267f30d0f",
       colors: ["#97FFFF", "#88DDE2", "#6FD2F2"],
-      price: 100,
+      price: 1000,
       details: [
         {
           title: "Project Overview",
@@ -74,7 +74,7 @@ export const fetchCredits = async () => {
       image:
         "https://firebasestorage.googleapis.com/v0/b/fg-react-app.appspot.com/o/carbonCredits%2Fthe-russas-project.png?alt=media&token=587c32ad-afa5-4a2a-86cb-3d7e6ddfc5a2",
       colors: ["#93F302", "#6FB802", "#558D01"],
-      price: 100,
+      price: 1000,
       details: [
         {
           title: "Project Overview",
@@ -107,7 +107,7 @@ export const fetchCredits = async () => {
       image:
         "https://firebasestorage.googleapis.com/v0/b/fg-react-app.appspot.com/o/carbonCredits%2Fcolombian-reforestation.png?alt=media&token=805775e6-6043-45f4-8711-6e02c6d14800",
       colors: ["#029C45", "#01612B", "#015827"],
-      price: 100,
+      price: 1000,
       details: [
         {
           title: "Project Overview",
@@ -138,6 +138,8 @@ export const fetchCredits = async () => {
   return credits;
 };
 
-export const fetchTrees = async () => {
+const fetchTrees = async () => {
   // todo: Fetch trees from API
 };
+
+export { fetchCredits };
