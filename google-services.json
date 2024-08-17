@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "489135632905-ghgfg3maae2q840gc5t5r8mq0ol0ekls.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.fgdevteam.fgreactapp",
+            "certificate_hash": "fa9442631596e68b22d7fa8ffba295f02b801e5d"
+          }
+        },
+        {
           "client_id": "489135632905-vsacp04unrags9uphrms8mogeq506o2v.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

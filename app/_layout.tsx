@@ -10,7 +10,8 @@ import { initializeAuth } from "firebase/auth";
 import { getReactNativePersistence } from "@firebase/auth/dist/rn/index.js";
 import { getFirestore } from "firebase/firestore";
 import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
-import { CartProvider } from "@/contexts";
+import { Alert, PermissionsAndroid } from "react-native";
+import messaging from "@react-native-firebase/messaging";
 
 // Initialize Firebase
 const firebaseConfig = {
@@ -32,7 +33,6 @@ if (!getApps().length) {
   getFirestore(app);
 }
 
-
 // import Purchases, { LOG_LEVEL } from "react-native-purchases";
 // import { Platform } from "react-native";
 
@@ -40,6 +40,23 @@ if (!getApps().length) {
 // SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+
+  // Android notification permission
+  PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
+
+  // IOS notification permission
+  async function requestUserPermission(): Promise<boolean> {
+    const authStatus = await messaging().requestPermission();
+    const enabled =
+      authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+      authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+
+    if (enabled) {
+      console.log('Authorization status:', authStatus);
+    }
+    return enabled;
+  }
+
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
@@ -48,6 +65,53 @@ export default function RootLayout() {
     if (loaded) {
       SplashScreen.hideAsync();
     }
+
+    const setupMessaging = async () => {
+      const permissionGranted = await requestUserPermission();
+      if (permissionGranted) {
+        const token = await messaging().getToken();
+        console.log(token);
+      } else {
+        console.log("Permission not granted");
+      }
+    };
+    setupMessaging();
+
+    // Check whether an initial notification is available
+    messaging()
+      .getInitialNotification()
+      .then(async (remoteMessage) => {
+        if (remoteMessage) {
+          console.log(
+            "Notification caused app to open from quit state:",
+            remoteMessage.notification
+          );
+        }
+      });
+
+    // Assume a message-notification contains a "type" property in the data payload of the screen to open
+    messaging().onNotificationOpenedApp((remoteMessage) => {
+      console.log(
+        "Notification caused app to open from background state:",
+        remoteMessage.notification
+      );
+    });
+
+    // Register background handler
+    messaging().setBackgroundMessageHandler(async (remoteMessage) => {
+      console.log("Message handled in the background!", remoteMessage);
+    });
+
+    const unsubscribe = messaging().onMessage(async remoteMessage => {
+      if (remoteMessage.notification) {
+        Alert.alert(
+          remoteMessage.notification.title || 'New Notification',
+          remoteMessage.notification.body || 'You have a new notification'
+        );
+      }
+    });
+
+    return unsubscribe;
   }, [loaded]);
 
   //   useEffect(() => {
@@ -73,17 +137,24 @@ export default function RootLayout() {
 
   return (
     <PaperProvider>
-      <CartProvider>
-        <Stack
-          screenOptions={{
-            // Hide the header for all other routes.
-            headerShown: false,
-          }}
-        >
-          <Stack.Screen name="+not-found" />
-          <Stack.Screen name="index" />
-        </Stack>
-      </CartProvider>
+      <Stack
+        screenOptions={{
+          // Hide the header for all other routes.
+          headerShown: false,
+        }}
+      >
+        <Stack.Screen name="+not-found" />
+        <Stack.Screen name="index" />
+      </Stack>
+      <Stack
+        screenOptions={{
+          // Hide the header for all other routes.
+          headerShown: false,
+        }}
+      >
+        <Stack.Screen name="+not-found" />
+        <Stack.Screen name="index" />
+      </Stack>
     </PaperProvider>
   );
 }

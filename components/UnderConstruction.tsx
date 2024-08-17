@@ -4,7 +4,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 import * as Progress from "react-native-progress";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Dimensions } from "react-native";
-import BackButton from "./common/BackButton";
+import { BackButton } from "@/components/common";
 
 const UnderConstructionScreen = () => {
   const screenWidth = Dimensions.get("window").width;

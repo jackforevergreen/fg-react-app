@@ -3,9 +3,19 @@ import { Text, Pressable, StyleSheet } from "react-native";
 import Icon from "react-native-vector-icons/Feather";
 import { router } from "expo-router";
 
-export const BackButton = () => {
+export const BackButton = ({ link }: { link?: string }) => {
+  const navigate = () => {
+    if (link) {
+      router.replace(link);
+    } else if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/");
+    }
+  };
+
   return (
-    <Pressable style={styles.container} onPress={() => router.back()} hitSlop={24}>
+    <Pressable style={styles.container} onPress={() => navigate()} hitSlop={24}>
       <Icon name="chevron-left" size={18} color="black" />
       <Text style={styles.text}>Back</Text>
     </Pressable>

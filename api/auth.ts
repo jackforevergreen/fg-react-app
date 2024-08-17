@@ -10,7 +10,7 @@ import {
   linkWithCredential,
   signOut,
   sendPasswordResetEmail,
-  signInWithEmailAndPassword
+  signInWithEmailAndPassword,
 } from "firebase/auth";
 import { router } from "expo-router";
 import {
@@ -25,11 +25,7 @@ import { fetchEmissionsData } from "./emissions";
 import { sendWelcomeEmail } from "./email";
 
 /* Function to sign up the user with the email and password */
-export const onSignup = async (
-  email: string,
-  password: string,
-  name: string
-) => {
+const onSignup = async (email: string, password: string, name: string) => {
   const db = getFirestore();
   const auth = getAuth();
 
@@ -50,6 +46,7 @@ export const onSignup = async (
         name: name,
         email: email,
         isAnonymous: false,
+        fgCoins: 0,
       });
     } else {
       // Create new account
@@ -75,6 +72,7 @@ export const onSignup = async (
         followerCount: 0,
         followingCount: 0,
         isAnonymous: false,
+        fgCoins: 0,
       });
     }
 
@@ -90,10 +88,11 @@ export const onSignup = async (
     const errorCode = error.code;
     const errorMessage = error.message;
     Alert.alert("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
+    console.error(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
   }
 };
 
-export const onGoogleSignUp = async () => {
+const onGoogleSignUp = async () => {
   try {
     await GoogleSignin.hasPlayServices();
     const user = await GoogleSignin.signIn();
@@ -124,6 +123,7 @@ export const onGoogleSignUp = async () => {
           followerCount: 0,
           followingCount: 0,
           isAnonymous: false,
+          fgCoins: 0,
         },
         { merge: true }
       );
@@ -145,10 +145,11 @@ export const onGoogleSignUp = async () => {
     const errorCode = error.code;
     const errorMessage = error.message;
     Alert.alert("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
+    console.error(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
   }
 };
 
-export const onContinueAnonymously = async () => {
+const onContinueAnonymously = async () => {
   const auth = getAuth();
 
   try {
@@ -158,14 +159,7 @@ export const onContinueAnonymously = async () => {
     const db = getFirestore();
     const userDocRef = doc(db, "users", user.uid);
     await setDoc(userDocRef, {
-      name: "Guest User",
-      email: null,
-      photoURL: null,
       createdAt: serverTimestamp(),
-      followers: [],
-      following: [],
-      followerCount: 0,
-      followingCount: 0,
       isAnonymous: true,
     });
 
@@ -182,11 +176,12 @@ export const onContinueAnonymously = async () => {
     const errorCode = error.code;
     const errorMessage = error.message;
     Alert.alert("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
+    console.error(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
   }
 };
 
 /* Function to sign up the user with the email and password */
-export const onLogin = (email: string, password: string) => {
+const onLogin = (email: string, password: string) => {
   const auth = getAuth();
   signInWithEmailAndPassword(auth, email, password)
     .then((userCredential) => {
@@ -205,11 +200,11 @@ export const onLogin = (email: string, password: string) => {
       const errorCode = error.code;
       const errorMessage = error.message;
       Alert.alert("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
-      console.log("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
+      console.error(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
     });
 };
 
-export const onGoogleLogin = async () => {
+const onGoogleLogin = async () => {
   try {
     await GoogleSignin.hasPlayServices();
     const user = await GoogleSignin.signIn();
@@ -231,21 +226,19 @@ export const onGoogleLogin = async () => {
         .catch((error) => {
           const errorCode = error.code;
           const errorMessage = error.message;
-          Alert.alert(
-            "Error",
-            `Code: ${errorCode}\nMessage: ${errorMessage}`
-          );
+          Alert.alert("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
+          console.error(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
         });
     }
   } catch (error: any) {
     const errorCode = error.code;
     const errorMessage = error.message;
     Alert.alert("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
-    console.log("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
+    console.error(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
   }
 };
 
-export const handleLogout = () => {
+const handleLogout = () => {
   const auth = getAuth();
 
   Alert.alert("Logout", "Are you sure you want to logout?", [
@@ -262,13 +255,14 @@ export const handleLogout = () => {
           })
           .catch((error) => {
             Alert.alert("Error", "Failed to logout. Please try again.");
+            console.error("Error: Failed to logout. Please try again.");
           });
       },
     },
   ]);
 };
 
-export const handleResetPassword = (email: string) => {
+const handleResetPassword = (email: string) => {
   const auth = getAuth();
   if (email.trim() === "") {
     Alert.alert("Error", "Please enter your email address.");
@@ -277,6 +271,7 @@ export const handleResetPassword = (email: string) => {
 
   sendPasswordResetEmail(auth, email)
     .then(() => {
+      // todo: replace this with an actual helper message for web
       Alert.alert(
         "Success",
         "Password reset email sent. Please check your inbox.",
@@ -286,5 +281,16 @@ export const handleResetPassword = (email: string) => {
     .catch((error) => {
       const errorMessage = error.message;
       Alert.alert("Error", `Failed to send reset email: ${errorMessage}`);
+      console.error(`Error: Failed to send reset email: ${errorMessage}`);
     });
+};
+
+export {
+  onSignup,
+  onGoogleSignUp,
+  onContinueAnonymously,
+  onLogin,
+  onGoogleLogin,
+  handleLogout,
+  handleResetPassword,
 };

@@ -1,23 +1,89 @@
-import React from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
   FlatList,
   TouchableOpacity,
   StyleSheet,
+  Alert,
 } from "react-native";
 import { Image } from "expo-image";
-import { FGCoin } from "@/constants/Images";
-import { useCart } from "@/contexts";
-import { CartItem } from "@/types";
 import { LinearGradient } from "expo-linear-gradient";
 import Icon from "react-native-vector-icons/Feather";
+import { getAuth } from "firebase/auth";
+import {
+  incrementQuantity,
+  decrementQuantity,
+  getCart,
+  clearCart,
+} from "@/api/cart";
+import { CartItem } from "@/types";
 import { router } from "expo-router";
 import { PageHeader, BackButton } from "@/components/common";
+import { purchaseCarbonCredits } from "@/api/purchase";
+import { formatPrice } from "@/utils/format";
 
 export default function ShoppingCartScreen() {
-  const { items, getCartTotal, incrementQuantity, decrementQuantity } =
-    useCart();
+  const auth = getAuth();
+  const [items, setItems] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCart = async () => {
+      const cartItems = await getCart();
+      setItems(cartItems);
+      setLoading(false);
+    };
+
+    fetchCart();
+  }, []);
+
+  const getCartTotal = () => {
+    return items.reduce((total, item) => total + item.price * item.quantity, 0);
+  };
+
+  const handlePurchase = async () => {
+    try {
+      const result = await purchaseCarbonCredits(
+        auth.currentUser?.uid || "",
+        items
+      );
+
+      if (result.success) {
+        await clearCart();
+        setItems([]);
+
+        Alert.alert(
+          "Purchase Successful",
+          "Your carbon credits have been added to your account."
+        );
+        router.push({
+          pathname: "purchase-complete",
+          params: { transactionId: result.transactionId },
+        });
+      } else {
+        throw new Error("Purchase failed");
+      }
+    } catch (error) {
+      console.error("Error during purchase:", error);
+      Alert.alert(
+        "Purchase Failed",
+        "There was an error processing your purchase. Please try again."
+      );
+    }
+  };
+
+  const handleIncrementQuantity = async (itemId: string) => {
+    await incrementQuantity(itemId);
+    const updatedCart = await getCart();
+    setItems(updatedCart);
+  };
+
+  const handleDecrementQuantity = async (itemId: string) => {
+    await decrementQuantity(itemId);
+    const updatedCart = await getCart();
+    setItems(updatedCart);
+  };
 
   const renderItem = ({ item }: { item: CartItem }) => (
     <View style={styles.itemContainer}>
@@ -35,14 +101,14 @@ export default function ShoppingCartScreen() {
         <Text style={styles.itemName}>{item.name}</Text>
         <View style={styles.quantityControl}>
           <TouchableOpacity
-            onPress={() => decrementQuantity(item.id)}
+            onPress={() => handleDecrementQuantity(item.id)}
             style={styles.quantityButton}
           >
             <Icon name="minus" size={24} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.quantityText}>{item.quantity}</Text>
           <TouchableOpacity
-            onPress={() => incrementQuantity(item.id)}
+            onPress={() => handleIncrementQuantity(item.id)}
             style={styles.quantityButton}
           >
             <Icon name="plus" size={24} color="#fff" />
@@ -50,11 +116,20 @@ export default function ShoppingCartScreen() {
         </View>
       </View>
       <View style={styles.priceContainer}>
-        <Image source={FGCoin} style={styles.coinImage} />
-        <Text style={styles.itemPrice}>{item.price * item.quantity}</Text>
+        <Text style={styles.itemPrice}>
+          {formatPrice(item.price * item.quantity)}
+        </Text>
       </View>
     </View>
   );
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -64,7 +139,7 @@ export default function ShoppingCartScreen() {
         subtitle="Shopping Cart"
         description="Make a Positive Impact on the Environment Today!"
       />
-      <BackButton />
+      <BackButton link={"carbon-credit"} />
 
       <View style={styles.creditList}>
         <FlatList
@@ -77,18 +152,15 @@ export default function ShoppingCartScreen() {
       <View style={styles.footer}>
         <View style={styles.totalContainer}>
           <Text style={styles.totalLabel}>Total:</Text>
-          <View style={styles.totalValue}>
-            <Image source={FGCoin} style={styles.coinImage} />
-            <Text style={styles.totalValueText}>{getCartTotal()}</Text>
-          </View>
+          <Text style={styles.totalValueText}>
+            {formatPrice(getCartTotal())}
+          </Text>
         </View>
         <TouchableOpacity
           style={styles.purchaseButton}
-          onPress={() => router.navigate("fg-coins")}
+          onPress={handlePurchase}
         >
-          <Text style={styles.purchaseButtonText}>
-            Not Enough Forevergreen Coins. Buy now?
-          </Text>
+          <Text style={styles.purchaseButtonText}>Buy Now</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.continueButton}
@@ -105,7 +177,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   greenCircleLarge: {
     position: "absolute",
@@ -162,7 +235,7 @@ const styles = StyleSheet.create({
   },
   purchaseButtonText: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: "bold",
   },
   continueButton: {

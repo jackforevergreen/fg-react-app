@@ -1,96 +1,81 @@
-import { useState, useRef } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
-  ScrollView,
   StyleSheet,
+  LayoutAnimation,
 } from "react-native";
 import { Image } from "expo-image";
 import Icon from "react-native-vector-icons/Feather";
 import { CarbonCredit } from "@/types";
-import { FGCoin } from "@/constants/Images";
-import { useCart } from "@/contexts";
+import { addToCart } from "@/api/cart";
+import { formatPrice } from "@/utils/format";
 
-const ProjectCard = ({ project }: { project: CarbonCredit }) => {
+const ProjectCard: React.FC<{ project: CarbonCredit }> = ({ project }) => {
   const [quantity, setQuantity] = useState(1);
   const [currentPage, setCurrentPage] = useState(0);
   const [expanded, setExpanded] = useState(false);
-  const { addToCart } = useCart();
 
-  const toggleExpanded = () => setExpanded(!expanded);
-  const incrementQuantity = () => setQuantity(quantity + 1);
-  const decrementQuantity = () => setQuantity(Math.max(1, quantity - 1));
+  const toggleExpanded = useCallback(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpanded((prev) => !prev);
+  }, []);
 
-  const navigateDetails = (direction: "next" | "prev") => {
-    if (direction === "next") {
-      setCurrentPage((prev) => (prev + 1) % project.details.length);
-    } else {
-      setCurrentPage((prev) => (prev - 1 + project.details.length) % project.details.length);
-    }
-  };
+  const incrementQuantity = useCallback(
+    () => setQuantity((prev) => prev + 1),
+    []
+  );
+  const decrementQuantity = useCallback(
+    () => setQuantity((prev) => Math.max(1, prev - 1)),
+    []
+  );
 
-  const handleAddToCart = () => {
+  const navigateDetails = useCallback(
+    (direction: "next" | "prev") => {
+      setCurrentPage((prev) => {
+        if (direction === "next") {
+          return (prev + 1) % project.details.length;
+        } else {
+          return (prev - 1 + project.details.length) % project.details.length;
+        }
+      });
+    },
+    [project.details.length]
+  );
+
+  const handleAddToCart = useCallback(() => {
     addToCart(project, quantity);
     setQuantity(1);
-  };
+  }, [project, quantity]);
 
   if (!project) return null;
 
+  const currentDetail = project.details[currentPage];
+
   return (
     <View style={styles.container}>
-      <View>
-        <Text style={styles.title}>{project.name}</Text>
+      <Text style={styles.title}>{project.name}</Text>
 
-        <View style={[styles.pagerView, { height: expanded ? 300 : 140 }]}>
-          {project.details.map((detail, index) => (
-            <View
-              key={index}
-              style={[
-                styles.page,
-                { display: index === currentPage ? "flex" : "none" },
-              ]}
-            >
-              <Text style={styles.detailTitle}>{detail.title}</Text>
-              <ScrollView
-                style={[
-                  styles.scrollView,
-                  { maxHeight: expanded ? undefined : 80 },
-                ]}
-                scrollEnabled={expanded}
-              >
-                <Text style={styles.detailContent}>
-                  {detail.content.split("\n").map((item, idx) => {
-                    const parts = item.split(":");
-                    return (
-                      <Text key={idx}>
-                        {parts.length > 1 ? (
-                          <>
-                            <Text style={styles.boldText}>{parts[0]}:</Text>
-                            {parts.slice(1).join(":")}
-                          </>
-                        ) : (
-                          item
-                        )}
-                        {"\n"}
-                      </Text>
-                    );
-                  })}
-                </Text>
-              </ScrollView>
-              {detail.content.length > 60 && (
-                <TouchableOpacity
-                  onPress={toggleExpanded}
-                  style={styles.showMoreButton}
-                >
-                  <Text style={styles.showMoreText}>
-                    {expanded ? "Show Less" : "Show More"}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          ))}
-        </View>
+      <View style={styles.detailsContainer}>
+        <Text style={styles.detailTitle}>{currentDetail.title}</Text>
+        <Text
+          style={[
+            styles.detailContent,
+            !expanded && styles.detailContentCollapsed,
+          ]}
+          numberOfLines={expanded ? undefined : 3}
+        >
+          {currentDetail.content}
+        </Text>
+        <TouchableOpacity
+          onPress={toggleExpanded}
+          style={styles.showMoreButton}
+        >
+          <Text style={styles.showMoreText}>
+            {expanded ? "Show Less" : "Show More"}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.controls}>
@@ -102,8 +87,7 @@ const ProjectCard = ({ project }: { project: CarbonCredit }) => {
 
         <View style={styles.priceContainer}>
           <View style={styles.coinContainer}>
-            <Image source={FGCoin} style={styles.coinImage} />
-            <Text style={styles.priceText}>{project.price * quantity}</Text>
+            <Text style={styles.priceText}>{formatPrice(project.price * quantity)}</Text>
           </View>
           <View style={styles.perTonContainer}>
             <Text style={styles.perTonText}>per ton</Text>
@@ -135,8 +119,7 @@ const ProjectCard = ({ project }: { project: CarbonCredit }) => {
       <View style={styles.totalContainer}>
         <Text style={styles.totalText}>Total:</Text>
         <View style={styles.totalPriceContainer}>
-          <Image source={FGCoin} style={styles.coinImage} />
-          <Text style={styles.totalPriceText}>{project.price * quantity}</Text>
+          <Text style={styles.totalPriceText}>{formatPrice(project.price * quantity)}</Text>
         </View>
         <TouchableOpacity
           style={styles.addToCartButton}
@@ -169,41 +152,33 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 8,
   },
-  pagerView: {
-    position: "relative",
-    overflow: "hidden",
-  },
-  page: {
-    position: "absolute",
-    width: "100%",
-    height: "100%",
+  detailsContainer: {
+    marginBottom: 16,
   },
   detailTitle: {
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 8,
   },
-  scrollView: {
-    overflow: "hidden",
-  },
   detailContent: {
-    fontSize: 18,
+    fontSize: 16,
     lineHeight: 24,
   },
-  boldText: {
-    fontWeight: "bold",
+  detailContentCollapsed: {
+    height: 72, // Approximately 3 lines of text
   },
   showMoreButton: {
+    alignSelf: "flex-end",
     marginTop: 8,
   },
   showMoreText: {
     color: "#409994",
+    fontWeight: "bold",
   },
   controls: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 16,
     marginBottom: 16,
     gap: 16,
   },
@@ -221,10 +196,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 4,
   },
-  coinImage: {
-    height: 24,
-    width: 24,
-  },
   priceText: {
     fontSize: 24,
     fontWeight: "bold",
@@ -239,7 +210,6 @@ const styles = StyleSheet.create({
   quantityContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 8,
   },
   quantityButton: {
     backgroundColor: "black",
