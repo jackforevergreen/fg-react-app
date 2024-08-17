@@ -10,7 +10,7 @@ import { initializeAuth } from "firebase/auth";
 import { getReactNativePersistence } from "@firebase/auth/dist/rn/index.js";
 import { getFirestore } from "firebase/firestore";
 import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
-import { Alert, PermissionsAndroid } from "react-native";
+import { Alert, PermissionsAndroid, Platform } from "react-native";
 import messaging from "@react-native-firebase/messaging";
 
 // Initialize Firebase
@@ -41,16 +41,13 @@ if (!getApps().length) {
 
 export default function RootLayout() {
 
-  // Android notification permission
-  PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
+  if (Platform.OS === 'android') {
+    PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
+  }
 
-  // IOS notification permission
   async function requestUserPermission(): Promise<boolean> {
     const authStatus = await messaging().requestPermission();
-    const enabled =
-      authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-      authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-
+    const enabled = authStatus === messaging.AuthorizationStatus.AUTHORIZED || authStatus === messaging.AuthorizationStatus.PROVISIONAL;
     if (enabled) {
       console.log('Authorization status:', authStatus);
     }
@@ -65,53 +62,57 @@ export default function RootLayout() {
     if (loaded) {
       SplashScreen.hideAsync();
     }
+    
+    if (Platform.OS === 'android' || Platform.OS === 'ios') {
 
-    const setupMessaging = async () => {
-      const permissionGranted = await requestUserPermission();
-      if (permissionGranted) {
-        const token = await messaging().getToken();
-        console.log(token);
-      } else {
-        console.log("Permission not granted");
-      }
-    };
-    setupMessaging();
+      const setupMessaging = async () => {
+        const permissionGranted = await requestUserPermission();
+        if (permissionGranted) {
+          const token = await messaging().getToken();
+          console.log(token);
+        } else {
+          console.log("Permission not granted");
+        }
+      };
+      setupMessaging();
 
-    // Check whether an initial notification is available
-    messaging()
-      .getInitialNotification()
-      .then(async (remoteMessage) => {
-        if (remoteMessage) {
-          console.log(
-            "Notification caused app to open from quit state:",
-            remoteMessage.notification
+      // Check whether an initial notification is available
+      messaging()
+        .getInitialNotification()
+        .then(async (remoteMessage) => {
+          if (remoteMessage) {
+            console.log(
+              "Notification caused app to open from quit state:",
+              remoteMessage.notification
+            );
+          }
+        });
+
+      // Assume a message-notification contains a "type" property in the data payload of the screen to open
+      messaging().onNotificationOpenedApp((remoteMessage) => {
+        console.log(
+          "Notification caused app to open from background state:",
+          remoteMessage.notification
+        );
+      });
+
+      // Register background handler
+      messaging().setBackgroundMessageHandler(async (remoteMessage) => {
+        console.log("Message handled in the background!", remoteMessage);
+      });
+
+      const unsubscribe = messaging().onMessage(async remoteMessage => {
+        if (remoteMessage.notification) {
+          Alert.alert(
+            remoteMessage.notification.title || 'New Notification',
+            remoteMessage.notification.body || 'You have a new notification'
           );
         }
       });
 
-    // Assume a message-notification contains a "type" property in the data payload of the screen to open
-    messaging().onNotificationOpenedApp((remoteMessage) => {
-      console.log(
-        "Notification caused app to open from background state:",
-        remoteMessage.notification
-      );
-    });
+      return unsubscribe;
+    }
 
-    // Register background handler
-    messaging().setBackgroundMessageHandler(async (remoteMessage) => {
-      console.log("Message handled in the background!", remoteMessage);
-    });
-
-    const unsubscribe = messaging().onMessage(async remoteMessage => {
-      if (remoteMessage.notification) {
-        Alert.alert(
-          remoteMessage.notification.title || 'New Notification',
-          remoteMessage.notification.body || 'You have a new notification'
-        );
-      }
-    });
-
-    return unsubscribe;
   }, [loaded]);
 
   //   useEffect(() => {
