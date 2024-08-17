@@ -1,31 +1,37 @@
 import {
   getFirestore,
   doc,
-  arrayUnion,
   runTransaction,
   serverTimestamp,
   collection,
+  getDoc,
 } from "firebase/firestore";
-import { CartItem } from "@/types";
+import { CartItem, CarbonCredit } from "@/types";
 
-export const purchaseCarbonCredits = async (
-  userId: string,
-  items: CartItem[]
-) => {
+// Purchase carbon credits
+const purchaseCarbonCredits = async (userId: string, items: CartItem[]) => {
   const db = getFirestore();
   const userRef = doc(db, "users", userId);
 
   try {
     // Calculate total amount
-    const totalAmount = items.reduce(
-      (total, item) => total + item.price * item.quantity,
-      0
-    );
+    let totalAmount = 0;
+    const creditPromises = items.map(async (item) => {
+      const creditRef = doc(db, "carbonCredits", item.id);
+      const creditDoc = await getDoc(creditRef);
+      if (!creditDoc.exists()) {
+        throw new Error(`Carbon credit with ID ${item.id} does not exist`);
+      }
+      const creditData = creditDoc.data() as CarbonCredit;
+      totalAmount += creditData.price * item.quantity;
+      return { id: item.id, quantity: item.quantity };
+    });
+    const purchasedCredits = await Promise.all(creditPromises);
 
     // TODO: Integrate Stripe payment here
     // const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
     // const paymentIntent = await stripe.paymentIntents.create({
-    //   amount: Math.round(totalAmount * 100), // Stripe expects amount in cents
+    //   amount: Math.round(totalAmount), // Stripe expects amount in cents
     //   currency: 'usd',
     //   customer: userId, // Assuming you've set up the user as a Stripe customer
     //   payment_method_types: ['card'],
@@ -42,30 +48,47 @@ export const purchaseCarbonCredits = async (
           throw new Error("User document does not exist!");
         }
 
-        // Create carbon credits array
-        const carbonCredits = items.map((item) => ({
-          id: item.id,
-          name: item.name,
-          quantity: item.quantity,
-        }));
-
         // Create a new transaction document
         const transactionRef = doc(
           collection(db, "users", userId, "transactions")
         );
         const transactionData = {
-          items,
+          credits: purchasedCredits,
           totalAmount,
           purchaseDate: serverTimestamp(),
-          carbonCredits,
           // paymentIntentId: paymentIntent.id // Uncomment when using Stripe
         };
 
         transaction.set(transactionRef, transactionData);
 
         // Update user's carbon credits
+        const existingCredits = userDoc.data().carbonCredits || [];
+        const updatedCredits = purchasedCredits.map((item) => {
+          const existingCredit = existingCredits.find(
+            (credit: CartItem) => credit.id === item.id
+          );
+          if (existingCredit) {
+            // If the credit already exists, update the quantity
+            return {
+              id: item.id,
+              quantity: existingCredit.quantity + item.quantity,
+            };
+          } else {
+            // If it's a new credit, add it to the array
+            return item;
+          }
+        });
+
+        // Merge the updated credits with the existing ones
+        const finalCredits = existingCredits
+          .filter(
+            (credit: CartItem) =>
+              !updatedCredits.some((uc) => uc.id === credit.id)
+          )
+          .concat(updatedCredits);
+
         transaction.update(userRef, {
-          carbonCredits: arrayUnion(...carbonCredits),
+          carbonCredits: finalCredits,
         });
 
         return transactionRef.id; // Return the transaction ID
@@ -87,3 +110,5 @@ export const purchaseCarbonCredits = async (
     };
   }
 };
+
+export { purchaseCarbonCredits };

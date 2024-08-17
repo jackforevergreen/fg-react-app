@@ -2,6 +2,7 @@ import { useRootNavigationState, Redirect, router } from "expo-router";
 import { View, StyleSheet, TouchableOpacity, Text } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import React, { useState } from "react";
+import { syncCreditsToFirestore } from "@/api/debug";
 
 // Initialize debugMode with useState
 export default function Index() {

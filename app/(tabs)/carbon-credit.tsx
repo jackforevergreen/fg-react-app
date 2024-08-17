@@ -24,27 +24,36 @@ export default function CarbonCreditScreen() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
   useEffect(() => {
-    setLoading(true);
+    let isMounted = true;
     const initializeData = async () => {
-      const result = await fetchCredits();
-      if (result && result.length > 0) {
-        setCredits(result as CarbonCredit[]);
-        setSelectedProject(result[0] as CarbonCredit);
+      try {
+        const result = await fetchCredits();
+        if (isMounted && result && result.length > 0) {
+          setCredits(result as CarbonCredit[]);
+          setSelectedProject(result[0] as CarbonCredit);
+        }
+      } catch (error) {
+        console.error("Error fetching credits:", error);
       }
     };
     initializeData();
 
     // Subscribe to cart changes
     const unsubscribe = subscribeToCart((items) => {
-      setCartItems(items);
-      setLoading(false);
+      if (isMounted) {
+        setCartItems(items);
+        setLoading(false);
+      }
     });
 
-    // Cleanup subscription on component unmount
-    return () => unsubscribe();
+    // Cleanup subscription and prevent state updates on unmounted component
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
-  const numItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+  const numItems = cartItems ? cartItems.reduce((acc, item) => acc + item.quantity, 0) : 0;
 
   const renderCreditItem = ({ item }: { item: CarbonCredit }) => (
     <CreditItem

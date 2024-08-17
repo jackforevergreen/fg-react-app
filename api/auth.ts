@@ -46,7 +46,6 @@ const onSignup = async (email: string, password: string, name: string) => {
         name: name,
         email: email,
         isAnonymous: false,
-        fgCoins: 0,
       });
     } else {
       // Create new account
@@ -72,7 +71,6 @@ const onSignup = async (email: string, password: string, name: string) => {
         followerCount: 0,
         followingCount: 0,
         isAnonymous: false,
-        fgCoins: 0,
       });
     }
 
@@ -123,7 +121,6 @@ const onGoogleSignUp = async () => {
           followerCount: 0,
           followingCount: 0,
           isAnonymous: false,
-          fgCoins: 0,
         },
         { merge: true }
       );

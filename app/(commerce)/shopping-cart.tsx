@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
@@ -17,25 +18,40 @@ import {
   getCart,
   clearCart,
 } from "@/api/cart";
-import { CartItem } from "@/types";
+import { CartItem, CarbonCredit } from "@/types";
 import { router } from "expo-router";
 import { PageHeader, BackButton } from "@/components/common";
 import { purchaseCarbonCredits } from "@/api/purchase";
 import { formatPrice } from "@/utils/format";
+import { fetchSpecificCredit } from "@/api/products";
+
+interface CartItemWithDetails extends CartItem, CarbonCredit {}
 
 export default function ShoppingCartScreen() {
   const auth = getAuth();
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [items, setItems] = useState<CartItemWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchCart = async () => {
-      const cartItems = await getCart();
-      setItems(cartItems);
-      setLoading(false);
+    const fetchCartWithDetails = async () => {
+      try {
+        const cartItems = await getCart();
+        const itemsWithDetails = await Promise.all(
+          cartItems.map(async (item) => {
+            const creditDetails = await fetchSpecificCredit(item.id);
+            return { ...item, ...creditDetails };
+          })
+        );
+        setItems(itemsWithDetails as CartItemWithDetails[]);
+      } catch (error) {
+        console.error("Error fetching cart:", error);
+        Alert.alert("Error", "Failed to load your cart. Please try again.");
+      } finally {
+        setLoading(false);
+      }
     };
 
-    fetchCart();
+    fetchCartWithDetails();
   }, []);
 
   const getCartTotal = () => {
@@ -43,6 +59,14 @@ export default function ShoppingCartScreen() {
   };
 
   const handlePurchase = async () => {
+    if (items.length === 0) {
+      Alert.alert(
+        "Empty Cart",
+        "Please add items to your cart before purchasing."
+      );
+      return;
+    }
+
     try {
       const result = await purchaseCarbonCredits(
         auth.currentUser?.uid || "",
@@ -74,18 +98,40 @@ export default function ShoppingCartScreen() {
   };
 
   const handleIncrementQuantity = async (itemId: string) => {
-    await incrementQuantity(itemId);
-    const updatedCart = await getCart();
-    setItems(updatedCart);
+    try {
+      await incrementQuantity(itemId);
+      const updatedCart = await getCart();
+      const updatedItemsWithDetails = await Promise.all(
+        updatedCart.map(async (item) => {
+          const creditDetails = await fetchSpecificCredit(item.id);
+          return { ...item, ...creditDetails };
+        })
+      );
+      setItems(updatedItemsWithDetails as CartItemWithDetails[]);
+    } catch (error) {
+      console.error("Error incrementing quantity:", error);
+      Alert.alert("Error", "Failed to update quantity. Please try again.");
+    }
   };
 
   const handleDecrementQuantity = async (itemId: string) => {
-    await decrementQuantity(itemId);
-    const updatedCart = await getCart();
-    setItems(updatedCart);
+    try {
+      await decrementQuantity(itemId);
+      const updatedCart = await getCart();
+      const updatedItemsWithDetails = await Promise.all(
+        updatedCart.map(async (item) => {
+          const creditDetails = await fetchSpecificCredit(item.id);
+          return { ...item, ...creditDetails };
+        })
+      );
+      setItems(updatedItemsWithDetails as CartItemWithDetails[]);
+    } catch (error) {
+      console.error("Error decrementing quantity:", error);
+      Alert.alert("Error", "Failed to update quantity. Please try again.");
+    }
   };
 
-  const renderItem = ({ item }: { item: CartItem }) => (
+  const renderItem = ({ item }: { item: CartItemWithDetails }) => (
     <View style={styles.itemContainer}>
       <View style={styles.itemInfo}>
         <LinearGradient
@@ -125,8 +171,8 @@ export default function ShoppingCartScreen() {
 
   if (loading) {
     return (
-      <View style={styles.container}>
-        <Text>Loading...</Text>
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color="#409858" />
       </View>
     );
   }
@@ -139,15 +185,21 @@ export default function ShoppingCartScreen() {
         subtitle="Shopping Cart"
         description="Make a Positive Impact on the Environment Today!"
       />
-      <BackButton link={"carbon-credit"} />
+      <BackButton />
 
-      <View style={styles.creditList}>
-        <FlatList
-          data={items}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-        />
-      </View>
+      {items.length > 0 ? (
+        <View style={styles.creditList}>
+          <FlatList
+            data={items}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id}
+          />
+        </View>
+      ) : (
+        <View style={styles.emptyCartContainer}>
+          <Text style={styles.emptyCartText}>Your cart is empty</Text>
+        </View>
+      )}
 
       <View style={styles.footer}>
         <View style={styles.totalContainer}>
@@ -157,8 +209,12 @@ export default function ShoppingCartScreen() {
           </Text>
         </View>
         <TouchableOpacity
-          style={styles.purchaseButton}
+          style={[
+            styles.purchaseButton,
+            items.length === 0 && styles.disabledButton,
+          ]}
           onPress={handlePurchase}
+          disabled={items.length === 0}
         >
           <Text style={styles.purchaseButtonText}>Buy Now</Text>
         </TouchableOpacity>
@@ -319,5 +375,21 @@ const styles = StyleSheet.create({
   itemPrice: {
     marginLeft: 8,
     fontSize: 20,
+  },
+  centered: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyCartContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyCartText: {
+    fontSize: 18,
+    color: "#666",
+  },
+  disabledButton: {
+    backgroundColor: "#ccc",
   },
 });
