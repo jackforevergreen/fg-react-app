@@ -146,6 +146,15 @@ export default function RootLayout() {
         <Stack.Screen name="+not-found" />
         <Stack.Screen name="index" />
       </Stack>
+      <Stack
+        screenOptions={{
+          // Hide the header for all other routes.
+          headerShown: false,
+        }}
+      >
+        <Stack.Screen name="+not-found" />
+        <Stack.Screen name="index" />
+      </Stack>
     </PaperProvider>
   );
 }
