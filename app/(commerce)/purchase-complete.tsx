@@ -10,41 +10,32 @@ import {
 import { Image } from "expo-image";
 import { BackButton } from "@/components/common";
 import { LinearGradient } from "expo-linear-gradient";
-import { FgCoin } from "@/constants/Images";
 import { router } from "expo-router";
 import { PageHeader } from "@/components/common";
 import { useLocalSearchParams } from "expo-router";
-import { getAuth } from "firebase/auth";
-import { getFirestore, doc, getDoc } from "firebase/firestore";
+import { getTransactionById, Transaction } from "@/api/transaction";
+import { formatPrice } from "@/utils/format";
+import { CarbonCredit } from "@/types";
 
 const PurchaseCompleteScreen = () => {
-  const auth = getAuth();
   const { transactionId } = useLocalSearchParams<{ transactionId: string }>();
-  const [transaction, setTransaction] = useState<any>(null);
+  const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchTransaction = async () => {
-      if (!transactionId || !auth.currentUser) {
+      if (!transactionId) {
+        console.error("No transactionId provided");
         setLoading(false);
         return;
       }
 
-      const db = getFirestore();
-      const transactionRef = doc(
-        db,
-        "users",
-        auth.currentUser.uid,
-        "transactions",
-        transactionId
-      );
-
       try {
-        const transactionDoc = await getDoc(transactionRef);
-        if (transactionDoc.exists()) {
-          setTransaction(transactionDoc.data());
+        const fetchedTransaction = await getTransactionById(transactionId);
+        if (fetchedTransaction) {
+          setTransaction(fetchedTransaction);
         } else {
-          console.error("Transaction not found");
+          console.error("Transaction not found for ID:", transactionId);
         }
       } catch (error) {
         console.error("Error fetching transaction:", error);
@@ -54,7 +45,7 @@ const PurchaseCompleteScreen = () => {
     };
 
     fetchTransaction();
-  }, [transactionId, auth.currentUser]);
+  }, [transactionId]);
 
   if (loading) {
     return (
@@ -67,14 +58,17 @@ const PurchaseCompleteScreen = () => {
   if (!transaction) {
     return (
       <View style={styles.container}>
-        <Text>Transaction not found</Text>
+        <Text>Error: {"Transaction not found"}</Text>
+        <Text>Transaction ID: {transactionId}</Text>
       </View>
     );
   }
-  const isCarbonCreditPurchase = transaction.type === "carbon_credit_purchase";
 
   // Calculate total CO2 offset
-  const totalCO2Offset = transaction.items.reduce((total: number, item: any) => total + item.quantity, 0);
+  const totalCO2Offset = transaction.items.reduce(
+    (total: number, item: any) => total + item.quantity,
+    0
+  );
 
   return (
     <View style={styles.container}>
@@ -93,47 +87,31 @@ const PurchaseCompleteScreen = () => {
             end={{ x: 0.5, y: 1 }}
             style={styles.gradient}
           >
-            <Image source={FgCoin} style={styles.coinImage} />
+            <Text style={styles.checkmark}>✓</Text>
           </LinearGradient>
-          {isCarbonCreditPurchase ? (
-            <>
-              <Text style={styles.purchaseText}>Carbon Credits Purchased:</Text>
-              {transaction.items.map((item: any, index: number) => (
-                <View key={index} style={styles.itemContainer}>
-                  <Text style={styles.itemName}>{item.carbonCreditName}</Text>
-                  <Text style={styles.itemQuantity}>
-                    Quantity: {item.quantity}
-                  </Text>
-                  <Text style={styles.itemPrice}>
-                    Price: {item.quantity * item.unitPrice} FG Coins
-                  </Text>
-                </View>
-              ))}
-              <Text style={styles.totalText}>
-                Total Spent: {transaction.fgCoinsSpent} FG Coins
+          <Text style={styles.purchaseText}>Carbon Credits Purchased:</Text>
+          {transaction.carbonCredits.map((credit, index: number) => (
+            <View key={index} style={styles.itemContainer}>
+              <Text style={styles.itemName}>{credit.name}</Text>
+              <Text style={styles.itemQuantity}>
+                Quantity: {credit.quantity}
               </Text>
-            </>
-          ) : (
-            <Text style={styles.coinText}>
-              {transaction.amount} Forevergreen Coins
-            </Text>
-          )}
+            </View>
+          ))}
+          <Text style={styles.totalText}>
+            Total Spent: {formatPrice(transaction.totalAmount)}
+          </Text>
+          <Text style={styles.offsetText}>
+            Total CO2 Offset: {totalCO2Offset} tons
+          </Text>
           <Text style={styles.transactionId}>
             Transaction ID: {transactionId}
           </Text>
           <TouchableOpacity
             style={styles.button}
-            onPress={() =>
-              router.navigate(
-                isCarbonCreditPurchase ? "carbon-credit" : "shopping-cart"
-              )
-            }
+            onPress={() => router.navigate("carbon-credit")}
           >
-            <Text style={styles.buttonText}>
-              {isCarbonCreditPurchase
-                ? "Back to Carbon Credits"
-                : "Back to Shopping Cart"}
-            </Text>
+            <Text style={styles.buttonText}>Back to Carbon Credits</Text>
           </TouchableOpacity>
         </LinearGradient>
       </ScrollView>
@@ -156,22 +134,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   gradient: {
-    width: 149,
-    height: 155,
+    width: 100,
+    height: 100,
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 15,
+    borderRadius: 50,
     overflow: "hidden",
     marginBottom: 16,
   },
-  coinImage: {
-    width: 81,
-    height: 87,
-  },
-  coinText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginTop: 8,
+  checkmark: {
+    fontSize: 60,
+    color: "white",
   },
   purchaseText: {
     fontSize: 18,
@@ -193,14 +166,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
   },
-  itemPrice: {
-    fontSize: 14,
-    color: "#666",
-  },
   totalText: {
     fontSize: 16,
     fontWeight: "bold",
     marginTop: 16,
+  },
+  offsetText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginTop: 8,
+    color: "#409858",
   },
   transactionId: {
     fontSize: 14,

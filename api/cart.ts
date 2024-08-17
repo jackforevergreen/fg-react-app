@@ -3,68 +3,129 @@ import {
   doc,
   getDoc,
   setDoc,
-  updateDoc,
-  arrayRemove,
+  onSnapshot,
+  Unsubscribe,
 } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
-import { CarbonCredit } from "@/types";
+import { getAuth, User } from "firebase/auth";
+import { CarbonCredit, CartItem } from "@/types";
 
-// Get the cart reference for the current user
-const getCartRef = () => {
-  const auth = getAuth();
+// Helper function to get the cart reference for the current user
+const getCartRef = (user: User) => {
   const db = getFirestore();
-  const userId = auth.currentUser?.uid;
-  if (userId) {
-    return doc(db, "users", userId, "carts");
-  }
-  throw new Error("User is not authenticated");
+
+  return doc(db, "users", user.uid, "cart", "items");
 };
 
 // Add an item to the cart
-// todo: make this work with tree planting
 export const addToCart = async (item: CarbonCredit, quantity: number = 1) => {
-  const cartRef = getCartRef();
-  const cartDoc = await getDoc(cartRef);
-  const items = cartDoc.data()?.items || [];
+  const auth = getAuth();
+  const user = auth.currentUser;
+  if (!user) throw new Error("User is not authenticated");
 
-  const existingItemIndex = items.findIndex(
-    (i: CarbonCredit) => i.id === item.id
-  );
+  const cartRef = getCartRef(user);
+  const cartDoc = await getDoc(cartRef);
+  const items = cartDoc.exists() ? cartDoc.data().items : [];
+
+  const existingItemIndex = items.findIndex((i: CartItem) => i.id === item.id);
 
   if (existingItemIndex !== -1) {
-    // Item already exists, update quantity
     items[existingItemIndex].quantity += quantity;
   } else {
-    // New item, add to cart
     items.push({ ...item, quantity });
   }
 
-  await setDoc(cartRef, { items }, { merge: true });
+  await setDoc(cartRef, { items });
 };
 
 // Remove an item from the cart
-// todo: make this work with tree planting
-export const removeFromCart = async (itemId: CarbonCredit["id"]) => {
-  const cartRef = getCartRef();
+export const removeFromCart = async (itemId: string) => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+  if (!user) throw new Error("User is not authenticated");
+
+  const cartRef = getCartRef(user);
   const cartDoc = await getDoc(cartRef);
-  const items = cartDoc.data()?.items || [];
-  const itemToRemove = items.find((item: { id: string }) => item.id === itemId);
-  if (itemToRemove) {
-    await updateDoc(cartRef, {
-      items: arrayRemove(itemToRemove),
-    });
-  }
+  const items = cartDoc.exists() ? cartDoc.data().items : [];
+
+  const updatedItems = items.filter((item: CartItem) => item.id !== itemId);
+  await setDoc(cartRef, { items: updatedItems });
 };
 
 // Get the cart items
-export const getCart = async () => {
-  const cartRef = getCartRef();
+export const getCart = async (): Promise<CartItem[]> => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+  if (!user) throw new Error("User is not authenticated");
+
+  const cartRef = getCartRef(user);
   const cartDoc = await getDoc(cartRef);
-  return cartDoc.data()?.items || [];
+  return cartDoc.exists() ? cartDoc.data().items : [];
 };
 
 // Clear the cart
 export const clearCart = async () => {
-  const cartRef = getCartRef();
-  await updateDoc(cartRef, { items: [] });
+  const auth = getAuth();
+  const user = auth.currentUser;
+  if (!user) throw new Error("User is not authenticated");
+
+  const cartRef = getCartRef(user);
+  await setDoc(cartRef, { items: [] });
+};
+
+// Increment item quantity
+export const incrementQuantity = async (itemId: string) => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+  if (!user) throw new Error("User is not authenticated");
+
+  const cartRef = getCartRef(user);
+  const cartDoc = await getDoc(cartRef);
+  const items = cartDoc.exists() ? cartDoc.data().items : [];
+
+  const updatedItems = items.map((item: CartItem) =>
+    item.id === itemId ? { ...item, quantity: item.quantity + 1 } : item
+  );
+
+  await setDoc(cartRef, { items: updatedItems });
+};
+
+// Decrement item quantity
+export const decrementQuantity = async (itemId: string) => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+  if (!user) throw new Error("User is not authenticated");
+
+  const cartRef = getCartRef(user);
+  const cartDoc = await getDoc(cartRef);
+  const items = cartDoc.exists() ? cartDoc.data().items : [];
+
+  const item = items.find((i: CartItem) => i.id === itemId);
+  if (item && item.quantity === 1) {
+    await removeFromCart(itemId);
+  } else {
+    const updatedItems = items.map((item: CartItem) =>
+      item.id === itemId ? { ...item, quantity: item.quantity - 1 } : item
+    );
+    await setDoc(cartRef, { items: updatedItems });
+  }
+};
+
+// Calculate cart total
+export const getCartTotal = (items: CartItem[]): number => {
+  return items.reduce((total, item) => total + item.price * item.quantity, 0);
+};
+
+// Subscribe to cart changes
+export const subscribeToCart = (
+  callback: (items: CartItem[]) => void
+): Unsubscribe => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+  if (!user) throw new Error("User is not authenticated");
+
+  const cartRef = getCartRef(user);
+  return onSnapshot(cartRef, (doc) => {
+    const items = doc.exists() ? doc.data().items : [];
+    callback(items);
+  });
 };

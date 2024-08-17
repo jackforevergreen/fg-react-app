@@ -88,7 +88,7 @@ const onSignup = async (email: string, password: string, name: string) => {
     const errorCode = error.code;
     const errorMessage = error.message;
     Alert.alert("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
-    console.log(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
+    console.error(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
   }
 };
 
@@ -145,7 +145,7 @@ const onGoogleSignUp = async () => {
     const errorCode = error.code;
     const errorMessage = error.message;
     Alert.alert("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
-    console.log(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
+    console.error(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
   }
 };
 
@@ -176,7 +176,7 @@ const onContinueAnonymously = async () => {
     const errorCode = error.code;
     const errorMessage = error.message;
     Alert.alert("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
-    console.log(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
+    console.error(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
   }
 };
 
@@ -200,7 +200,7 @@ const onLogin = (email: string, password: string) => {
       const errorCode = error.code;
       const errorMessage = error.message;
       Alert.alert("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
-      console.log(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
+      console.error(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
     });
 };
 
@@ -227,14 +227,14 @@ const onGoogleLogin = async () => {
           const errorCode = error.code;
           const errorMessage = error.message;
           Alert.alert("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
-          console.log(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
+          console.error(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
         });
     }
   } catch (error: any) {
     const errorCode = error.code;
     const errorMessage = error.message;
     Alert.alert("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
-    console.log(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
+    console.error(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
   }
 };
 
@@ -255,7 +255,7 @@ const handleLogout = () => {
           })
           .catch((error) => {
             Alert.alert("Error", "Failed to logout. Please try again.");
-            console.log("Error: Failed to logout. Please try again.");
+            console.error("Error: Failed to logout. Please try again.");
           });
       },
     },
@@ -277,14 +277,11 @@ const handleResetPassword = (email: string) => {
         "Password reset email sent. Please check your inbox.",
         [{ text: "OK", onPress: () => router.push("/login") }]
       );
-      console.log(
-        "Success: Password reset email sent. Please check your inbox."
-      );
     })
     .catch((error) => {
       const errorMessage = error.message;
       Alert.alert("Error", `Failed to send reset email: ${errorMessage}`);
-      console.log(`Error: Failed to send reset email: ${errorMessage}`);
+      console.error(`Error: Failed to send reset email: ${errorMessage}`);
     });
 };
 

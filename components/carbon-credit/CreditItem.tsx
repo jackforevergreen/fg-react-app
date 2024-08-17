@@ -2,7 +2,7 @@ import React from "react";
 import { Text, View, TouchableOpacity, StyleSheet } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { FgCoin } from "@/constants/Images";
+import { formatPrice } from "@/utils/format";
 
 const blurhash =
   "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[";
@@ -41,8 +41,7 @@ const CreditItem: React.FC<CreditItemProps> = ({
         {name}
       </Text>
       <View style={styles.amountContainer}>
-        <Image source={FgCoin} style={styles.currency} />
-        <Text style={styles.amount}>{price}</Text>
+        <Text style={styles.amount}>{formatPrice(price)}</Text>
       </View>
     </TouchableOpacity>
   </View>
@@ -78,10 +77,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-  },
-  currency: {
-    height: 17,
-    width: 16,
   },
   amount: {
     fontSize: 16,
