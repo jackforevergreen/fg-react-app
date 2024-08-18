@@ -2,28 +2,35 @@ import { useState, useEffect } from "react";
 import {
   View,
   Text,
-  TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
   ScrollView,
 } from "react-native";
-import { Image } from "expo-image";
 import { BackButton } from "@/components/common";
 import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
 import { PageHeader } from "@/components/common";
 import { useLocalSearchParams } from "expo-router";
-import { getTransactionById, Transaction } from "@/api/transaction";
-import { formatPrice } from "@/utils/format";
-import { CarbonCredit } from "@/types";
+import { getTransactionById } from "@/api/transaction";
+import { fetchSpecificCredit } from "@/api/products";
+import { CarbonCredit, Transaction } from "@/types";
+import { Image } from "expo-image";
+import { Pamona } from "@/constants/Images";
+import { Link } from "expo-router";
+import { Loading } from "@/components/common";
+
+interface TransactionWithCredits extends Transaction {
+  items: (CarbonCredit & { quantity: number })[];
+}
 
 const PurchaseCompleteScreen = () => {
   const { transactionId } = useLocalSearchParams<{ transactionId: string }>();
-  const [transaction, setTransaction] = useState<Transaction | null>(null);
+  const [transaction, setTransaction] = useState<TransactionWithCredits | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchTransaction = async () => {
+    const fetchTransactionAndCredits = async () => {
       if (!transactionId) {
         console.error("No transactionId provided");
         setLoading(false);
@@ -33,26 +40,30 @@ const PurchaseCompleteScreen = () => {
       try {
         const fetchedTransaction = await getTransactionById(transactionId);
         if (fetchedTransaction) {
-          setTransaction(fetchedTransaction);
+          const itemsWithCredits = await Promise.all(
+            fetchedTransaction.items.map(async (item) => {
+              const credit = await fetchSpecificCredit(item.id);
+              return { ...credit, quantity: item.quantity } as CarbonCredit & {
+                quantity: number;
+              };
+            })
+          );
+          setTransaction({ ...fetchedTransaction, items: itemsWithCredits });
         } else {
           console.error("Transaction not found for ID:", transactionId);
         }
       } catch (error) {
-        console.error("Error fetching transaction:", error);
+        console.error("Error fetching transaction or credits:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTransaction();
+    fetchTransactionAndCredits();
   }, [transactionId]);
 
   if (loading) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#409858" />
-      </View>
-    );
+    return <Loading />;
   }
 
   if (!transaction) {
@@ -66,56 +77,83 @@ const PurchaseCompleteScreen = () => {
 
   // Calculate total CO2 offset
   const totalCO2Offset = transaction.items.reduce(
-    (total: number, item: any) => total + item.quantity,
+    (total, item) => total + item.quantity,
     0
   );
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <PageHeader title="Thank you for your " titleAlt="purchase!" />
       <BackButton />
-      <ScrollView>
+      <View style={{ padding: 16 }}>
         <LinearGradient
           style={styles.card}
           colors={["#EFEFEF", "#E5F5F6"]}
           start={{ x: 0.5, y: 0 }}
           end={{ x: 0.5, y: 1 }}
         >
-          <LinearGradient
-            colors={["#34C759", "#409858", "#25532E"]}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 1 }}
-            style={styles.gradient}
-          >
-            <Text style={styles.checkmark}>✓</Text>
-          </LinearGradient>
-          <Text style={styles.purchaseText}>Carbon Credits Purchased:</Text>
-          {transaction.carbonCredits.map((credit, index: number) => (
-            <View key={index} style={styles.itemContainer}>
-              <Text style={styles.itemName}>{credit.name}</Text>
-              <Text style={styles.itemQuantity}>
-                Quantity: {credit.quantity}
-              </Text>
-            </View>
-          ))}
-          <Text style={styles.totalText}>
-            Total Spent: {formatPrice(transaction.totalAmount)}
-          </Text>
+          <View style={{ display: "flex", flexDirection: "row", gap: 32 }}>
+            {transaction.items.map((credit, index) => (
+              <View
+                key={index}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                  justifyContent: "center",
+                }}
+              >
+                <LinearGradient
+                  colors={credit.colors}
+                  start={{ x: 0.5, y: 0 }}
+                  end={{ x: 0.5, y: 1 }}
+                  style={styles.gradient}
+                >
+                  <Image
+                    source={credit.image}
+                    style={{ height: 104, width: 98 }}
+                  />
+                </LinearGradient>
+
+                <Text style={styles.itemDescription}>
+                  {`${credit.quantity} ${credit.type} Credits`}
+                </Text>
+              </View>
+            ))}
+          </View>
           <Text style={styles.offsetText}>
-            Total CO2 Offset: {totalCO2Offset} tons
+            <Text>{totalCO2Offset} tons of CO</Text>
+            <Text style={{ fontSize: 18 }}>2</Text>
+            <Text> Offset</Text>
           </Text>
-          <Text style={styles.transactionId}>
-            Transaction ID: {transactionId}
-          </Text>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => router.navigate("carbon-credit")}
-          >
-            <Text style={styles.buttonText}>Back to Carbon Credits</Text>
-          </TouchableOpacity>
         </LinearGradient>
-      </ScrollView>
-    </View>
+
+        <LinearGradient
+          style={styles.infoContainer}
+          colors={["#EFEFEF", "#E5F5F6"]}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+        >
+          <Text style={styles.infoTitle}>
+            You will be receiving an email with more
+            <Text style={{ color: "#409858" }}> information shortly!</Text>
+          </Text>
+          <Image source={Pamona} style={styles.infoImage} />
+          <View style={styles.buttonContainer}>
+            <Link href="/home" style={styles.linkStyle}>
+              <LinearGradient
+                style={styles.button}
+                colors={["#409858", "#B1E8C0"]}
+                start={{ x: 0.4, y: 0 }}
+                end={{ x: 0.9, y: 1 }}
+              >
+                <Text style={styles.buttonText}>Back Home</Text>
+              </LinearGradient>
+            </Link>
+          </View>
+        </LinearGradient>
+      </View>
+    </ScrollView>
   );
 };
 
@@ -125,7 +163,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
-    padding: 16,
   },
   card: {
     backgroundColor: "#f0f0f0",
@@ -134,65 +171,62 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   gradient: {
-    width: 100,
-    height: 100,
+    width: 148,
+    height: 148,
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 50,
-    overflow: "hidden",
-    marginBottom: 16,
+    borderRadius: 20,
+    marginBottom: 6,
   },
-  checkmark: {
-    fontSize: 60,
-    color: "white",
-  },
-  purchaseText: {
+  itemDescription: {
     fontSize: 18,
+    color: "#000",
     fontWeight: "bold",
-    marginBottom: 16,
-  },
-  itemContainer: {
-    backgroundColor: "white",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-    width: "100%",
-  },
-  itemName: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  itemQuantity: {
-    fontSize: 14,
-    color: "#666",
-  },
-  totalText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginTop: 16,
+    textAlign: "center",
   },
   offsetText: {
-    fontSize: 16,
+    marginTop: 40,
+    fontSize: 36,
     fontWeight: "bold",
-    marginTop: 8,
-    color: "#409858",
+    color: "#000",
   },
-  transactionId: {
-    fontSize: 14,
-    color: "#666",
-    marginVertical: 20,
+  infoContainer: {
+    flex: 1,
+    alignItems: "center",
+    padding: 20,
+    backgroundColor: "white",
+    marginVertical: 50,
+    borderRadius: 20,
+  },
+  infoTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  infoImage: {
+    width: "100%",
+    height: 216,
+    borderRadius: 10,
+    marginBottom: 20,
+  },
+  buttonContainer: {
+    display: "flex",
+    justifyContent: "center",
+  },
+  linkStyle: {
+    width: "80%",
   },
   button: {
-    backgroundColor: "#409858",
     paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 24,
+    alignItems: "center",
+    justifyContent: "center",
     borderRadius: 50,
-    width: "100%",
   },
   buttonText: {
     color: "white",
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
-    textAlign: "center",
   },
 });

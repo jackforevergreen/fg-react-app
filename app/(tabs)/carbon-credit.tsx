@@ -12,7 +12,7 @@ import ProjectCard from "@/components/carbon-credit/ProjectCard";
 import { fetchCredits } from "@/api/products";
 import { CarbonCredit, CartItem } from "@/types";
 import { subscribeToCart } from "@/api/cart";
-import { PageHeader } from "@/components/common";
+import { Loading, PageHeader } from "@/components/common";
 import { ShoppingCartBtn } from "@/components/ShoppingCartBtn";
 
 export default function CarbonCreditScreen() {
@@ -24,27 +24,36 @@ export default function CarbonCreditScreen() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
   useEffect(() => {
-    setLoading(true);
+    let isMounted = true;
     const initializeData = async () => {
-      const result = await fetchCredits();
-      if (result && result.length > 0) {
-        setCredits(result as CarbonCredit[]);
-        setSelectedProject(result[0] as CarbonCredit);
+      try {
+        const result = await fetchCredits();
+        if (isMounted && result && result.length > 0) {
+          setCredits(result as CarbonCredit[]);
+          setSelectedProject(result[0] as CarbonCredit);
+        }
+      } catch (error) {
+        console.error("Error fetching credits:", error);
       }
     };
     initializeData();
 
     // Subscribe to cart changes
     const unsubscribe = subscribeToCart((items) => {
-      setCartItems(items);
-      setLoading(false);
+      if (isMounted) {
+        setCartItems(items);
+        setLoading(false);
+      }
     });
 
-    // Cleanup subscription on component unmount
-    return () => unsubscribe();
+    // Cleanup subscription and prevent state updates on unmounted component
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
-  const numItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+  const numItems = cartItems ? cartItems.reduce((acc, item) => acc + item.quantity, 0) : 0;
 
   const renderCreditItem = ({ item }: { item: CarbonCredit }) => (
     <CreditItem
@@ -86,9 +95,8 @@ export default function CarbonCreditScreen() {
     </>
   );
 
-  // todo: replace with loading component
   if (loading) {
-    return <Text>Loading...</Text>;
+    return <Loading />;
   }
 
   return (

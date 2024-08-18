@@ -3,6 +3,7 @@ import { View, Text, StatusBar, Image, TouchableOpacity } from "react-native";
 import { router } from "expo-router";
 import { StyleSheet } from "react-native";
 import { TreeLogo } from "@/constants/Images";
+
 export default function GetStartedScreen() {
   return (
     <View style={styles.container}>

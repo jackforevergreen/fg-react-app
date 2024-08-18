@@ -21,6 +21,7 @@ interface EmissionsData {
   };
 }
 
+// Fetch emissions data for a specific month
 const saveEmissionsData = async (data: EmissionsData) => {
   const auth = getAuth();
   const db = getFirestore();
@@ -52,6 +53,7 @@ const saveEmissionsData = async (data: EmissionsData) => {
   }
 };
 
+// Fetch emissions data for a specific month
 const fetchEmissionsData = async (month?: string, userId?: string) => {
   const auth = getAuth();
   const db = getFirestore();

@@ -7,63 +7,62 @@ import {
   Unsubscribe,
 } from "firebase/firestore";
 import { getAuth, User } from "firebase/auth";
-import { CarbonCredit, CartItem } from "@/types";
+import { CartItem } from "@/types";
 
 // Helper function to get the cart reference for the current user
 const getCartRef = (user: User) => {
   const db = getFirestore();
-
   return doc(db, "users", user.uid, "cart", "items");
 };
 
 // Add an item to the cart
-export const addToCart = async (item: CarbonCredit, quantity: number = 1) => {
+const addToCart = async (creditId: string, quantity: number = 1) => {
   const auth = getAuth();
   const user = auth.currentUser;
   if (!user) throw new Error("User is not authenticated");
 
   const cartRef = getCartRef(user);
   const cartDoc = await getDoc(cartRef);
-  const items = cartDoc.exists() ? cartDoc.data().items : [];
+  let items: CartItem[] = cartDoc.exists() ? cartDoc.data().items || [] : [];
 
-  const existingItemIndex = items.findIndex((i: CartItem) => i.id === item.id);
+  const existingItemIndex = items.findIndex((i) => i.id === creditId);
 
   if (existingItemIndex !== -1) {
     items[existingItemIndex].quantity += quantity;
   } else {
-    items.push({ ...item, quantity });
+    items.push({ id: creditId, quantity });
   }
 
   await setDoc(cartRef, { items });
 };
 
 // Remove an item from the cart
-export const removeFromCart = async (itemId: string) => {
+const removeFromCart = async (creditId: string) => {
   const auth = getAuth();
   const user = auth.currentUser;
   if (!user) throw new Error("User is not authenticated");
 
   const cartRef = getCartRef(user);
   const cartDoc = await getDoc(cartRef);
-  const items = cartDoc.exists() ? cartDoc.data().items : [];
+  let items: CartItem[] = cartDoc.exists() ? cartDoc.data().items || [] : [];
 
-  const updatedItems = items.filter((item: CartItem) => item.id !== itemId);
+  const updatedItems = items.filter((item) => item.id !== creditId);
   await setDoc(cartRef, { items: updatedItems });
 };
 
 // Get the cart items
-export const getCart = async (): Promise<CartItem[]> => {
+const getCart = async (): Promise<CartItem[]> => {
   const auth = getAuth();
   const user = auth.currentUser;
   if (!user) throw new Error("User is not authenticated");
 
   const cartRef = getCartRef(user);
   const cartDoc = await getDoc(cartRef);
-  return cartDoc.exists() ? cartDoc.data().items : [];
+  return cartDoc.exists() ? cartDoc.data().items || [] : [];
 };
 
 // Clear the cart
-export const clearCart = async () => {
+const clearCart = async () => {
   const auth = getAuth();
   const user = auth.currentUser;
   if (!user) throw new Error("User is not authenticated");
@@ -73,50 +72,45 @@ export const clearCart = async () => {
 };
 
 // Increment item quantity
-export const incrementQuantity = async (itemId: string) => {
+const incrementQuantity = async (creditId: string) => {
   const auth = getAuth();
   const user = auth.currentUser;
   if (!user) throw new Error("User is not authenticated");
 
   const cartRef = getCartRef(user);
   const cartDoc = await getDoc(cartRef);
-  const items = cartDoc.exists() ? cartDoc.data().items : [];
+  let items: CartItem[] = cartDoc.exists() ? cartDoc.data().items || [] : [];
 
-  const updatedItems = items.map((item: CartItem) =>
-    item.id === itemId ? { ...item, quantity: item.quantity + 1 } : item
+  const updatedItems = items.map((item) =>
+    item.id === creditId ? { ...item, quantity: item.quantity + 1 } : item
   );
 
   await setDoc(cartRef, { items: updatedItems });
 };
 
 // Decrement item quantity
-export const decrementQuantity = async (itemId: string) => {
+const decrementQuantity = async (creditId: string) => {
   const auth = getAuth();
   const user = auth.currentUser;
   if (!user) throw new Error("User is not authenticated");
 
   const cartRef = getCartRef(user);
   const cartDoc = await getDoc(cartRef);
-  const items = cartDoc.exists() ? cartDoc.data().items : [];
+  let items: CartItem[] = cartDoc.exists() ? cartDoc.data().items || [] : [];
 
-  const item = items.find((i: CartItem) => i.id === itemId);
+  const item = items.find((i) => i.id === creditId);
   if (item && item.quantity === 1) {
-    await removeFromCart(itemId);
+    await removeFromCart(creditId);
   } else {
-    const updatedItems = items.map((item: CartItem) =>
-      item.id === itemId ? { ...item, quantity: item.quantity - 1 } : item
+    const updatedItems = items.map((item) =>
+      item.id === creditId ? { ...item, quantity: item.quantity - 1 } : item
     );
     await setDoc(cartRef, { items: updatedItems });
   }
 };
 
-// Calculate cart total
-export const getCartTotal = (items: CartItem[]): number => {
-  return items.reduce((total, item) => total + item.price * item.quantity, 0);
-};
-
 // Subscribe to cart changes
-export const subscribeToCart = (
+const subscribeToCart = (
   callback: (items: CartItem[]) => void
 ): Unsubscribe => {
   const auth = getAuth();
@@ -125,7 +119,17 @@ export const subscribeToCart = (
 
   const cartRef = getCartRef(user);
   return onSnapshot(cartRef, (doc) => {
-    const items = doc.exists() ? doc.data().items : [];
+    const items = doc.exists() ? doc.data().items || [] : [];
     callback(items);
   });
+};
+
+export {
+  addToCart,
+  removeFromCart,
+  getCart,
+  clearCart,
+  incrementQuantity,
+  decrementQuantity,
+  subscribeToCart,
 };

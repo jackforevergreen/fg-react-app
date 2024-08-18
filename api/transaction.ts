@@ -9,25 +9,10 @@ import {
   getDoc,
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import { CarbonCredit, Transaction, TransactionItem } from "@/types";
 
-export interface Transaction {
-  id: string;
-  items: {
-    id: string;
-    name: string;
-    quantity: number;
-    price: number;
-  }[];
-  totalAmount: number;
-  purchaseDate: string;
-  carbonCredits: {
-    id: string;
-    name: string;
-    quantity: number;
-  }[];
-}
-
-export const getRecentTransactions = async (
+// Get the most recent transactions for the current user
+const getRecentTransactions = async (
   count: number = 5
 ): Promise<Transaction[]> => {
   const auth = getAuth();
@@ -46,16 +31,36 @@ export const getRecentTransactions = async (
   );
 
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(
-    (doc) =>
-      ({
-        id: doc.id,
-        ...doc.data(),
-      } as Transaction)
+  return Promise.all(
+    querySnapshot.docs.map(async (queryDoc) => {
+      const data = queryDoc.data();
+      const items = await Promise.all(
+        data.credits.map(async (credit: { id: string; quantity: number }) => {
+          const creditRef = doc(db, "carbonCredits", credit.id);
+          const creditDoc = await getDoc(creditRef);
+          const creditData = creditDoc.exists()
+            ? (creditDoc.data() as CarbonCredit)
+            : null;
+          return {
+            id: credit.id,
+            quantity: credit.quantity,
+            price: creditData?.price || 0,
+            name: creditData?.name || "Unknown Credit",
+          } as TransactionItem;
+        })
+      );
+      return {
+        id: queryDoc.id,
+        items,
+        totalAmount: data.totalAmount,
+        purchaseDate: data.purchaseDate.toDate().toISOString(),
+      } as Transaction;
+    })
   );
 };
 
-export const getTransactionById = async (
+// Get a specific transaction by ID
+const getTransactionById = async (
   transactionId: string
 ): Promise<Transaction | null> => {
   const auth = getAuth();
@@ -79,8 +84,29 @@ export const getTransactionById = async (
     return null;
   }
 
+  const data = transactionDoc.data();
+  const items = await Promise.all(
+    data.credits.map(async (credit: { id: string; quantity: number }) => {
+      const creditRef = doc(db, "carbonCredits", credit.id);
+      const creditDoc = await getDoc(creditRef);
+      const creditData = creditDoc.exists()
+        ? (creditDoc.data() as CarbonCredit)
+        : null;
+      return {
+        id: credit.id,
+        quantity: credit.quantity,
+        price: creditData?.price || 0,
+        name: creditData?.name || "Unknown Credit",
+      } as TransactionItem;
+    })
+  );
+
   return {
     id: transactionDoc.id,
-    ...transactionDoc.data(),
+    items,
+    totalAmount: data.totalAmount,
+    purchaseDate: data.purchaseDate.toDate().toISOString(),
   } as Transaction;
 };
+
+export { getRecentTransactions, getTransactionById };

@@ -8,10 +8,11 @@ import { initializeApp, getApps } from "firebase/app";
 import { initializeAuth } from "firebase/auth";
 // @ts-expect-error Some error with types in this import because of the versions
 import { getReactNativePersistence } from "@firebase/auth/dist/rn/index.js";
-import { getFirestore } from "firebase/firestore";
+import { initializeFirestore } from "firebase/firestore";
 import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
 import { Alert, PermissionsAndroid, Platform } from "react-native";
 import messaging from "@react-native-firebase/messaging";
+import { StripeProvider } from "@stripe/stripe-react-native";
 
 // Initialize Firebase
 const firebaseConfig = {
@@ -30,7 +31,7 @@ if (!getApps().length) {
   initializeAuth(app, {
     persistence: getReactNativePersistence(ReactNativeAsyncStorage),
   });
-  getFirestore(app);
+  initializeFirestore(app, {});
 }
 
 // import Purchases, { LOG_LEVEL } from "react-native-purchases";
@@ -40,16 +41,19 @@ if (!getApps().length) {
 // SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-
-  if (Platform.OS === 'android') {
-    PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
+  if (Platform.OS === "android") {
+    PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
+    );
   }
 
   async function requestUserPermission(): Promise<boolean> {
     const authStatus = await messaging().requestPermission();
-    const enabled = authStatus === messaging.AuthorizationStatus.AUTHORIZED || authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+    const enabled =
+      authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+      authStatus === messaging.AuthorizationStatus.PROVISIONAL;
     if (enabled) {
-      console.log('Authorization status:', authStatus);
+      console.log("Authorization status:", authStatus);
     }
     return enabled;
   }
@@ -62,9 +66,8 @@ export default function RootLayout() {
     if (loaded) {
       SplashScreen.hideAsync();
     }
-    
-    if (Platform.OS === 'android' || Platform.OS === 'ios') {
 
+    if (Platform.OS === "android" || Platform.OS === "ios") {
       const setupMessaging = async () => {
         const permissionGranted = await requestUserPermission();
         if (permissionGranted) {
@@ -101,18 +104,17 @@ export default function RootLayout() {
         console.log("Message handled in the background!", remoteMessage);
       });
 
-      const unsubscribe = messaging().onMessage(async remoteMessage => {
+      const unsubscribe = messaging().onMessage(async (remoteMessage) => {
         if (remoteMessage.notification) {
           Alert.alert(
-            remoteMessage.notification.title || 'New Notification',
-            remoteMessage.notification.body || 'You have a new notification'
+            remoteMessage.notification.title || "New Notification",
+            remoteMessage.notification.body || "You have a new notification"
           );
         }
       });
 
       return unsubscribe;
     }
-
   }, [loaded]);
 
   //   useEffect(() => {
@@ -138,15 +140,20 @@ export default function RootLayout() {
 
   return (
     <PaperProvider>
-      <Stack
-        screenOptions={{
-          // Hide the header for all other routes.
-          headerShown: false,
-        }}
+      <StripeProvider
+        publishableKey="pk_test_51Pch2uJNQHxtxrkGVjNCflMy3L4mKNxA76N3W7vyowpCgVtKsisTowCdORHOZjBYsPYhuukodKiGF6FBRpj6FJPD00H3lUT9fK"
+        merchantIdentifier="merchant.com.fgdevteam.fgreactapp"
       >
-        <Stack.Screen name="+not-found" />
-        <Stack.Screen name="index" />
-      </Stack>
+        <Stack
+          screenOptions={{
+            // Hide the header for all other routes.
+            headerShown: false,
+          }}
+        >
+          <Stack.Screen name="+not-found" />
+          <Stack.Screen name="index" />
+        </Stack>
+      </StripeProvider>
     </PaperProvider>
   );
 }

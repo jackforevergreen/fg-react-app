@@ -8,6 +8,7 @@ const Penn = require("../assets/images/penn.png");
 const TeakTree = require("../assets/images/teak-tree-1.png");
 const OakTree = require("../assets/images/oak-tree-1.png");
 const PepperTree = require("../assets/images/pepper-tree-1.png");
+const Pamona = require("../assets/images/pamona.png");
 
 export {
   Earth,
@@ -20,4 +21,5 @@ export {
   TeakTree,
   OakTree,
   PepperTree,
+  Pamona,
 };

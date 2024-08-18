@@ -10,7 +10,7 @@ import { Image } from "expo-image";
 import Icon from "react-native-vector-icons/Feather";
 import { CarbonCredit } from "@/types";
 import { addToCart } from "@/api/cart";
-import { formatPrice } from "@/utils/format";
+import { formatPrice } from "@/utils";
 
 const ProjectCard: React.FC<{ project: CarbonCredit }> = ({ project }) => {
   const [quantity, setQuantity] = useState(1);
@@ -45,7 +45,7 @@ const ProjectCard: React.FC<{ project: CarbonCredit }> = ({ project }) => {
   );
 
   const handleAddToCart = useCallback(() => {
-    addToCart(project, quantity);
+    addToCart(project.id, quantity);
     setQuantity(1);
   }, [project, quantity]);
 
@@ -87,7 +87,9 @@ const ProjectCard: React.FC<{ project: CarbonCredit }> = ({ project }) => {
 
         <View style={styles.priceContainer}>
           <View style={styles.coinContainer}>
-            <Text style={styles.priceText}>{formatPrice(project.price * quantity)}</Text>
+            <Text style={styles.priceText}>
+              {formatPrice(project.price * quantity)}
+            </Text>
           </View>
           <View style={styles.perTonContainer}>
             <Text style={styles.perTonText}>per ton</Text>
@@ -119,7 +121,9 @@ const ProjectCard: React.FC<{ project: CarbonCredit }> = ({ project }) => {
       <View style={styles.totalContainer}>
         <Text style={styles.totalText}>Total:</Text>
         <View style={styles.totalPriceContainer}>
-          <Text style={styles.totalPriceText}>{formatPrice(project.price * quantity)}</Text>
+          <Text style={styles.totalPriceText}>
+            {formatPrice(project.price * quantity)}
+          </Text>
         </View>
         <TouchableOpacity
           style={styles.addToCartButton}

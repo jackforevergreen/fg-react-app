@@ -1,4 +1,4 @@
-export type CarbonCredit = {
+type CarbonCredit = {
   id: string;
   name: string;
   image: string;
@@ -16,6 +16,22 @@ export type CarbonCredit = {
   type: string;
 };
 
-export type CartItem = { quantity: number } & CarbonCredit;
+type CartItem = { 
+  id: string;
+  quantity: number;
+};
 
-export type Coin = { coins: number; price: number };
+interface TransactionItem {
+  id: string;
+  quantity: number;
+  price: number;
+}
+
+interface Transaction {
+  id: string;
+  items: TransactionItem[];
+  totalAmount: number;
+  purchaseDate: string;
+}
+
+export { CarbonCredit, CartItem, TransactionItem, Transaction };
