@@ -3,7 +3,7 @@ import { View, StyleSheet, TouchableOpacity, Text, Alert } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import React, { useState, useEffect } from "react";
 import { getAuth } from "firebase/auth";
-import { fetchEmissionsData } from '@api/emissions'; // Import the emissions function
+import { fetchEmissionsData } from "@/api/emissions";
 import dayjs from "dayjs";
 
 
