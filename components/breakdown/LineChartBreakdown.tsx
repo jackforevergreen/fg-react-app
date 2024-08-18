@@ -3,6 +3,7 @@ import { Dimensions, ActivityIndicator } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { fetchEmissionsData } from "@/api/emissions";
 import dayjs from "dayjs";
+import { Loading } from "@/components/common";
 
 const generateLastSixMonths = (): string[] => {
   const months = [];
@@ -32,7 +33,7 @@ const LineChartBreakdown = ({ userId }: { userId?: string }) => {
   const screenWidth = Dimensions.get("window").width;
 
   if (loading) {
-    return <ActivityIndicator size="large" color="#0000ff" />;
+    return <Loading />;
   }
 
   return (

@@ -16,6 +16,7 @@ import { CarbonCredit, Transaction } from "@/types";
 import { Image } from "expo-image";
 import { Pamona } from "@/constants/Images";
 import { Link } from "expo-router";
+import { Loading } from "@/components/common";
 
 interface TransactionWithCredits extends Transaction {
   items: (CarbonCredit & { quantity: number })[];
@@ -62,11 +63,7 @@ const PurchaseCompleteScreen = () => {
   }, [transactionId]);
 
   if (loading) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#409858" />
-      </View>
-    );
+    return <Loading />;
   }
 
   if (!transaction) {

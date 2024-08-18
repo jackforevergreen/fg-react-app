@@ -10,7 +10,7 @@ import { Image } from "expo-image";
 import Icon from "react-native-vector-icons/Feather";
 import { CarbonCredit } from "@/types";
 import { addToCart } from "@/api/cart";
-import { formatPrice } from "@/utils/format";
+import { formatPrice } from "@/utils";
 
 const ProjectCard: React.FC<{ project: CarbonCredit }> = ({ project }) => {
   const [quantity, setQuantity] = useState(1);

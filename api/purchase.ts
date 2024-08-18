@@ -5,6 +5,7 @@ import {
   serverTimestamp,
   collection,
   getDoc,
+  addDoc,
 } from "firebase/firestore";
 import { CartItem, CarbonCredit } from "@/types";
 
@@ -111,4 +112,69 @@ const purchaseCarbonCredits = async (userId: string, items: CartItem[]) => {
   }
 };
 
-export { purchaseCarbonCredits };
+async function fetchPaymentSheetParams(
+  amount: number,
+  uid: string
+): Promise<{
+  paymentIntent: string;
+  ephemeralKey: string;
+  customer: string;
+}> {
+  const db = getFirestore();
+
+  try {
+    const checkoutSessionRef = collection(
+      db,
+      "users",
+      uid,
+      "checkout_sessions"
+    );
+    const newSessionDoc = await addDoc(checkoutSessionRef, {
+      client: "mobile",
+      mode: "payment",
+      amount: amount,
+      currency: "usd",
+    });
+
+    console.log(
+      `Successfully created checkout session with ID: ${newSessionDoc.id}`
+    );
+
+    // Poll for the additional fields
+    const maxAttempts = 10;
+    const delayMs = 1000;
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+
+      const updatedDoc = await getDoc(newSessionDoc);
+      const data = updatedDoc.data();
+
+      if (
+        data?.paymentIntentClientSecret &&
+        data?.ephemeralKeySecret &&
+        data?.customer
+      ) {
+        console.log(
+          "Additional fields have been added by the Firebase extension."
+        );
+        return {
+          paymentIntent: data.paymentIntentClientSecret,
+          ephemeralKey: data.ephemeralKeySecret,
+          customer: data.customer,
+        };
+      }
+
+      console.log(`Attempt ${attempt + 1}: Waiting for additional fields...`);
+    }
+
+    throw new Error(
+      "Timeout: Additional fields were not added within the expected time."
+    );
+  } catch (error) {
+    console.error("Error creating or retrieving checkout session:", error);
+    throw error;
+  }
+}
+
+export { purchaseCarbonCredits, fetchPaymentSheetParams };

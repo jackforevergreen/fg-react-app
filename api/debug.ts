@@ -1,4 +1,4 @@
-import { getFirestore, writeBatch, doc } from "firebase/firestore";
+import { getFirestore, writeBatch, doc, collection, addDoc } from "firebase/firestore";
 import { CarbonCredit } from "@/types"; // Adjust the import path as needed
 
 async function syncCreditsToFirestore() {

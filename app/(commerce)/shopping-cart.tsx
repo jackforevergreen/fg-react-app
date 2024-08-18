@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-  ActivityIndicator,
+  ScrollView,
 } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
@@ -20,19 +20,32 @@ import {
 } from "@/api/cart";
 import { CartItem, CarbonCredit } from "@/types";
 import { router } from "expo-router";
-import { PageHeader, BackButton } from "@/components/common";
-import { purchaseCarbonCredits } from "@/api/purchase";
-import { formatPrice } from "@/utils/format";
+import { PageHeader, BackButton, Loading } from "@/components/common";
+import { purchaseCarbonCredits, fetchPaymentSheetParams } from "@/api/purchase";
+import { formatPrice } from "@/utils";
 import { fetchSpecificCredit } from "@/api/products";
+import { useStripe } from "@stripe/stripe-react-native";
 
 interface CartItemWithDetails extends CartItem, CarbonCredit {}
 
 export default function ShoppingCartScreen() {
   const auth = getAuth();
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const [items, setItems] = useState<CartItemWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const openPaymentSheet = async () => {
+    const { error } = await presentPaymentSheet();
+
+    if (error) {
+      Alert.alert(`Error code: ${error.code}`, error.message);
+    } else {
+      handlePurchase();
+    }
+  };
+
   useEffect(() => {
+    // Fetch cart items with details
     const fetchCartWithDetails = async () => {
       try {
         const cartItems = await getCart();
@@ -51,7 +64,38 @@ export default function ShoppingCartScreen() {
       }
     };
 
+    // Initialize PaymentSheet
+    const initializePaymentSheet = async () => {
+      if (!auth.currentUser) {
+        return;
+      }
+
+      const { paymentIntent, ephemeralKey, customer } =
+        await fetchPaymentSheetParams(
+          getCartTotal(),
+          auth.currentUser?.uid || ""
+        );
+
+      const { error } = await initPaymentSheet({
+        merchantDisplayName: "Forevergreen",
+        customerId: customer,
+        customerEphemeralKeySecret: ephemeralKey,
+        paymentIntentClientSecret: paymentIntent,
+        // Set `allowsDelayedPaymentMethods` to true if your business can handle payment
+        //methods that complete payment after a delay, like SEPA Debit and Sofort.
+        allowsDelayedPaymentMethods: true,
+        defaultBillingDetails: {
+          name: "Jane Doe",
+        },
+      });
+
+      if (!error) {
+        setLoading(false);
+      }
+    };
+
     fetchCartWithDetails();
+    initializePaymentSheet();
   }, []);
 
   const getCartTotal = () => {
@@ -170,61 +214,63 @@ export default function ShoppingCartScreen() {
   );
 
   if (loading) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color="#409858" />
-      </View>
-    );
+    return <Loading />;
   }
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.greenCircleLarge} />
-      <View style={styles.greenCircleSmall} />
+  const ListHeaderComponent = () => (
+    <>
       <PageHeader
         subtitle="Shopping Cart"
         description="Make a Positive Impact on the Environment Today!"
       />
       <BackButton />
+    </>
+  );
 
-      {items.length > 0 ? (
-        <View style={styles.creditList}>
-          <FlatList
-            data={items}
-            renderItem={renderItem}
-            keyExtractor={(item) => item.id}
-          />
-        </View>
-      ) : (
-        <View style={styles.emptyCartContainer}>
-          <Text style={styles.emptyCartText}>Your cart is empty</Text>
-        </View>
-      )}
+  const ListEmptyComponent = () => (
+    <View style={styles.emptyCartContainer}>
+      <Text style={styles.emptyCartText}>Your cart is empty</Text>
+    </View>
+  );
 
-      <View style={styles.footer}>
-        <View style={styles.totalContainer}>
-          <Text style={styles.totalLabel}>Total:</Text>
-          <Text style={styles.totalValueText}>
-            {formatPrice(getCartTotal())}
-          </Text>
-        </View>
-        <TouchableOpacity
-          style={[
-            styles.purchaseButton,
-            items.length === 0 && styles.disabledButton,
-          ]}
-          onPress={handlePurchase}
-          disabled={items.length === 0}
-        >
-          <Text style={styles.purchaseButtonText}>Buy Now</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.continueButton}
-          onPress={() => router.navigate("carbon-credit")}
-        >
-          <Text style={styles.continueButtonText}>Continue Shopping</Text>
-        </TouchableOpacity>
+  const ListFooterComponent = () => (
+    <View style={styles.footer}>
+      <View style={styles.totalContainer}>
+        <Text style={styles.totalLabel}>Total:</Text>
+        <Text style={styles.totalValueText}>{formatPrice(getCartTotal())}</Text>
       </View>
+      <TouchableOpacity
+        style={[
+          styles.purchaseButton,
+          items.length === 0 && styles.disabledButton,
+        ]}
+        onPress={() => openPaymentSheet()}
+        disabled={items.length === 0 || loading}
+      >
+        <Text style={styles.purchaseButtonText}>Buy Now</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.continueButton}
+        onPress={() => router.navigate("carbon-credit")}
+      >
+        <Text style={styles.continueButtonText}>Continue Shopping</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.greenCircleLarge} />
+      <View style={styles.greenCircleSmall} />
+      <FlatList
+        data={items}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        ListHeaderComponent={ListHeaderComponent}
+        ListEmptyComponent={ListEmptyComponent}
+        ListFooterComponent={ListFooterComponent}
+        contentContainerStyle={styles.flatList}
+      />
     </View>
   );
 }
@@ -232,7 +278,10 @@ export default function ShoppingCartScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "white",
+  },
+  flatList: {
+    paddingTop: 16,
     paddingHorizontal: 16,
     paddingBottom: 16,
   },

@@ -12,7 +12,7 @@ import ProjectCard from "@/components/carbon-credit/ProjectCard";
 import { fetchCredits } from "@/api/products";
 import { CarbonCredit, CartItem } from "@/types";
 import { subscribeToCart } from "@/api/cart";
-import { PageHeader } from "@/components/common";
+import { Loading, PageHeader } from "@/components/common";
 import { ShoppingCartBtn } from "@/components/ShoppingCartBtn";
 
 export default function CarbonCreditScreen() {
@@ -95,9 +95,8 @@ export default function CarbonCreditScreen() {
     </>
   );
 
-  // todo: replace with loading component
   if (loading) {
-    return <Text>Loading...</Text>;
+    return <Loading />;
   }
 
   return (

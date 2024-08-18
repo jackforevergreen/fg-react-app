@@ -1,4 +1,4 @@
-import { Loading } from "./Loading";
+import Loading from "./Loading";
 import { PageHeader } from "./PageHeader";
 import { BackButton } from "./BackButton";
 
