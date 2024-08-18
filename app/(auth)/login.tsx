@@ -137,7 +137,6 @@ const styles = StyleSheet.create({
   safeAreaView: {
     flex: 1,
     justifyContent: "center",
-    paddingHorizontal: 16,
     paddingBottom: 64,
   },
   title: {
@@ -159,7 +158,7 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     marginTop: 24,
-    paddingHorizontal: 48,
+    paddingHorizontal: 16,
     rowGap: 16,
   },
   inputContainer: {

@@ -1,25 +1,25 @@
 import { useRootNavigationState, Redirect, router } from "expo-router";
-import { View, StyleSheet, TouchableOpacity, Text, Alert } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Text } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import React, { useState, useEffect } from "react";
 import { getAuth } from "firebase/auth";
 import { fetchEmissionsData } from "@/api/emissions";
 import dayjs from "dayjs";
-
-
+import { Loading } from "@/components/common";
 
 // Initialize debugMode with useState
 export default function Index() {
   const [debugMode, setDebugMode] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [hasCalculatedEmissions, setHasCalculatedEmissions] = useState(false);
+  const [loading, setLoading] = useState(true);
   const rootNavigationState = useRootNavigationState();
 
   useEffect(() => {
     const checkUserStatus = async () => {
       const auth = getAuth();
       const user = auth.currentUser;
-      
+
       if (user) {
         setIsLoggedIn(true);
 
@@ -27,27 +27,41 @@ export default function Index() {
         if (emissionsData) {
           const lastUpdated = emissionsData.lastUpdated?.toDate();
           const daysSinceLastUpdate = lastUpdated
-            ? dayjs().diff(dayjs(lastUpdated), 'day')
+            ? dayjs().diff(dayjs(lastUpdated), "day")
             : null;
 
-          setHasCalculatedEmissions(daysSinceLastUpdate !== null && daysSinceLastUpdate <= 30);
+          setHasCalculatedEmissions(
+            daysSinceLastUpdate !== null && daysSinceLastUpdate <= 30
+          );
 
           if (daysSinceLastUpdate === null || daysSinceLastUpdate > 30) {
-            router.push({ pathname: "/pre-survey", params: { fromIndex: true } });
+            router.push({
+              pathname: "/pre-survey",
+              params: { fromIndex: "true" },
+            });
           }
         } else {
           setHasCalculatedEmissions(false);
-          router.push({ pathname: "/pre-survey", params: { fromIndex: true } });
+
+          router.push({
+            pathname: "/pre-survey",
+            params: { fromIndex: "true" },
+          });
         }
       } else {
         setIsLoggedIn(false);
       }
+      setLoading(false);
     };
 
     checkUserStatus();
   }, []);
 
   if (!rootNavigationState?.key) return null;
+
+  if (loading) {
+    return <Loading />;
+  }
 
   if (debugMode) {
     return (
@@ -82,7 +96,7 @@ export default function Index() {
     // Check if user is logged in and redirect accordingly
     if (isLoggedIn) {
       if (!hasCalculatedEmissions) {
-        return <Redirect href="/calculate-emissions" />; // Redirect to emissions calculation if not done this month
+        return <Redirect href="/pre-survey" />; // Redirect to emissions calculation if not done this month
       }
       return <Redirect href="/home" />;
     } else {

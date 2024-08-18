@@ -78,13 +78,13 @@ const styles = StyleSheet.create({
     marginTop: 160,
   },
   resultText: {
-    fontSize: 36,
+    fontSize: 24,
     marginTop: 16,
     fontWeight: "bold",
     textAlign: "center",
   },
   iconContainer: {
-    marginTop: 200,
+    marginTop: 24,
     alignSelf: "center",
   },
 });
