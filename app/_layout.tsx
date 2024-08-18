@@ -12,7 +12,7 @@ import { initializeFirestore } from "firebase/firestore";
 import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
 import { Alert, PermissionsAndroid, Platform } from "react-native";
 import messaging from "@react-native-firebase/messaging";
-import { StripeProvider } from "@stripe/stripe-react-native";
+import { StripeProvider } from "@/utils/stripe";
 
 // Initialize Firebase
 const firebaseConfig = {

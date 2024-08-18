@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -23,7 +23,7 @@ import { PageHeader, BackButton, Loading } from "@/components/common";
 import { purchaseCarbonCredits, fetchPaymentSheetParams } from "@/api/purchase";
 import { formatPrice } from "@/utils";
 import { fetchSpecificCredit } from "@/api/products";
-import { useStripe } from "@stripe/stripe-react-native";
+import { useStripe } from "@/utils/stripe";
 
 interface CartItemWithDetails extends CartItem, CarbonCredit {}
 
@@ -32,19 +32,44 @@ export default function ShoppingCartScreen() {
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const [items, setItems] = useState<CartItemWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
+  const [paymentSheetInitialized, setPaymentSheetInitialized] = useState(false);
 
-  const openPaymentSheet = async () => {
-    const { error } = await presentPaymentSheet();
+  const getCartTotal = useCallback(() => {
+    return items.reduce((total, item) => total + item.price * item.quantity, 0);
+  }, [items]);
 
-    if (error) {
-      Alert.alert(`Error code: ${error.code}`, error.message);
-    } else {
-      handlePurchase();
+  // Initialize PaymentSheet
+  const initializePaymentSheet = useCallback(async () => {
+    if (!auth.currentUser) {
+      return;
     }
-  };
+
+    const { paymentIntent, ephemeralKey, customer } =
+      await fetchPaymentSheetParams(
+        getCartTotal(),
+        auth.currentUser?.uid || ""
+      );
+
+    const { error } = await initPaymentSheet({
+      merchantDisplayName: "Forevergreen",
+      customerId: customer,
+      customerEphemeralKeySecret: ephemeralKey,
+      paymentIntentClientSecret: paymentIntent,
+      allowsDelayedPaymentMethods: true,
+      defaultBillingDetails: {
+        name: "Jane Doe",
+      },
+    });
+
+    if (!error) {
+      setPaymentSheetInitialized(true);
+    } else {
+      console.error("Error initializing payment sheet:", error);
+      Alert.alert("Error", "Failed to initialize payment. Please try again.");
+    }
+  }, [auth.currentUser, getCartTotal, initPaymentSheet]);
 
   useEffect(() => {
-    // Fetch cart items with details
     const fetchCartWithDetails = async () => {
       try {
         const cartItems = await getCart();
@@ -63,42 +88,27 @@ export default function ShoppingCartScreen() {
       }
     };
 
-    // Initialize PaymentSheet
-    const initializePaymentSheet = async () => {
-      if (!auth.currentUser) {
-        return;
-      }
-
-      const { paymentIntent, ephemeralKey, customer } =
-        await fetchPaymentSheetParams(
-          getCartTotal(),
-          auth.currentUser?.uid || ""
-        );
-
-      const { error } = await initPaymentSheet({
-        merchantDisplayName: "Forevergreen",
-        customerId: customer,
-        customerEphemeralKeySecret: ephemeralKey,
-        paymentIntentClientSecret: paymentIntent,
-        // Set `allowsDelayedPaymentMethods` to true if your business can handle payment
-        //methods that complete payment after a delay, like SEPA Debit and Sofort.
-        allowsDelayedPaymentMethods: true,
-        defaultBillingDetails: {
-          name: "Jane Doe",
-        },
-      });
-
-      if (!error) {
-        setLoading(false);
-      }
-    };
-
     fetchCartWithDetails();
-    initializePaymentSheet();
   }, []);
 
-  const getCartTotal = () => {
-    return items.reduce((total, item) => total + item.price * item.quantity, 0);
+  useEffect(() => {
+    if (!loading && items.length > 0) {
+      initializePaymentSheet();
+    }
+  }, [loading, items, initializePaymentSheet]);
+
+  const openPaymentSheet = async () => {
+    if (!paymentSheetInitialized) {
+      await initializePaymentSheet();
+    }
+
+    const { error } = await presentPaymentSheet();
+
+    if (error) {
+      Alert.alert(`Error code: ${error.code}`, error.message);
+    } else {
+      handlePurchase();
+    }
   };
 
   const handlePurchase = async () => {
@@ -151,6 +161,7 @@ export default function ShoppingCartScreen() {
         })
       );
       setItems(updatedItemsWithDetails as CartItemWithDetails[]);
+      setPaymentSheetInitialized(false); // Reset payment sheet initialization
     } catch (error) {
       console.error("Error incrementing quantity:", error);
       Alert.alert("Error", "Failed to update quantity. Please try again.");
@@ -168,6 +179,7 @@ export default function ShoppingCartScreen() {
         })
       );
       setItems(updatedItemsWithDetails as CartItemWithDetails[]);
+      setPaymentSheetInitialized(false); // Reset payment sheet initialization
     } catch (error) {
       console.error("Error decrementing quantity:", error);
       Alert.alert("Error", "Failed to update quantity. Please try again.");

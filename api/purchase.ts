@@ -29,79 +29,63 @@ const purchaseCarbonCredits = async (userId: string, items: CartItem[]) => {
     });
     const purchasedCredits = await Promise.all(creditPromises);
 
-    // TODO: Integrate Stripe payment here
-    // const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-    // const paymentIntent = await stripe.paymentIntents.create({
-    //   amount: Math.round(totalAmount), // Stripe expects amount in cents
-    //   currency: 'usd',
-    //   customer: userId, // Assuming you've set up the user as a Stripe customer
-    //   payment_method_types: ['card'],
-    // });
+    // Use a transaction to ensure data consistency
+    const result = await runTransaction(db, async (transaction) => {
+      const userDoc = await transaction.get(userRef);
+      if (!userDoc.exists()) {
+        throw new Error("User document does not exist!");
+      }
 
-    // For now, we'll assume the payment was successful
-    const paymentSuccessful = true; // This will be determined by Stripe in the future
+      // Create a new transaction document
+      const transactionRef = doc(
+        collection(db, "users", userId, "transactions")
+      );
+      const transactionData = {
+        credits: purchasedCredits,
+        totalAmount,
+        purchaseDate: serverTimestamp(),
+        // paymentIntentId: paymentIntent.id // Uncomment when using Stripe
+      };
 
-    if (paymentSuccessful) {
-      // Use a transaction to ensure data consistency
-      const result = await runTransaction(db, async (transaction) => {
-        const userDoc = await transaction.get(userRef);
-        if (!userDoc.exists()) {
-          throw new Error("User document does not exist!");
-        }
+      transaction.set(transactionRef, transactionData);
 
-        // Create a new transaction document
-        const transactionRef = doc(
-          collection(db, "users", userId, "transactions")
+      // Update user's carbon credits
+      const existingCredits = userDoc.data().carbonCredits || [];
+      const updatedCredits = purchasedCredits.map((item) => {
+        const existingCredit = existingCredits.find(
+          (credit: CartItem) => credit.id === item.id
         );
-        const transactionData = {
-          credits: purchasedCredits,
-          totalAmount,
-          purchaseDate: serverTimestamp(),
-          // paymentIntentId: paymentIntent.id // Uncomment when using Stripe
-        };
-
-        transaction.set(transactionRef, transactionData);
-
-        // Update user's carbon credits
-        const existingCredits = userDoc.data().carbonCredits || [];
-        const updatedCredits = purchasedCredits.map((item) => {
-          const existingCredit = existingCredits.find(
-            (credit: CartItem) => credit.id === item.id
-          );
-          if (existingCredit) {
-            // If the credit already exists, update the quantity
-            return {
-              id: item.id,
-              quantity: existingCredit.quantity + item.quantity,
-            };
-          } else {
-            // If it's a new credit, add it to the array
-            return item;
-          }
-        });
-
-        // Merge the updated credits with the existing ones
-        const finalCredits = existingCredits
-          .filter(
-            (credit: CartItem) =>
-              !updatedCredits.some((uc) => uc.id === credit.id)
-          )
-          .concat(updatedCredits);
-
-        transaction.update(userRef, {
-          carbonCredits: finalCredits,
-        });
-
-        return transactionRef.id; // Return the transaction ID
+        if (existingCredit) {
+          // If the credit already exists, update the quantity
+          return {
+            id: item.id,
+            quantity: existingCredit.quantity + item.quantity,
+          };
+        } else {
+          // If it's a new credit, add it to the array
+          return item;
+        }
       });
 
-      return {
-        success: true,
-        transactionId: result,
-      };
-    } else {
-      throw new Error("Payment failed");
-    }
+      // Merge the updated credits with the existing ones
+      const finalCredits = existingCredits
+        .filter(
+          (credit: CartItem) =>
+            !updatedCredits.some((uc) => uc.id === credit.id)
+        )
+        .concat(updatedCredits);
+
+      transaction.update(userRef, {
+        carbonCredits: finalCredits,
+      });
+
+      return transactionRef.id; // Return the transaction ID
+    });
+
+    return {
+      success: true,
+      transactionId: result,
+    };
   } catch (error) {
     console.error("Error in purchaseCarbonCredits:", error);
     return {
@@ -136,10 +120,6 @@ async function fetchPaymentSheetParams(
       currency: "usd",
     });
 
-    console.log(
-      `Successfully created checkout session with ID: ${newSessionDoc.id}`
-    );
-
     // Poll for the additional fields
     const maxAttempts = 10;
     const delayMs = 1000;
@@ -155,17 +135,12 @@ async function fetchPaymentSheetParams(
         data?.ephemeralKeySecret &&
         data?.customer
       ) {
-        console.log(
-          "Additional fields have been added by the Firebase extension."
-        );
         return {
           paymentIntent: data.paymentIntentClientSecret,
           ephemeralKey: data.ephemeralKeySecret,
           customer: data.customer,
         };
       }
-
-      console.log(`Attempt ${attempt + 1}: Waiting for additional fields...`);
     }
 
     throw new Error(
