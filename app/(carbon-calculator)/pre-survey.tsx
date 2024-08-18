@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import React from "react";
 import {
   View,
@@ -9,8 +9,9 @@ import {
 } from "react-native";
 
 const PreSurveyScreen = () => {
-  const params = router.getState().params; // Access the global router's state to get params
-  const fromIndex = params?.fromIndex === "true"; // Convert to boolean
+  const { fromIndex } = useLocalSearchParams<{ fromIndex: string }>();
+  // const params = router.getState().params; // Access the global router's state to get params
+  // const fromIndex = params?.fromIndex === "true"; // Convert to boolean
 
   return (
     <ScrollView style={styles.container}>
@@ -27,8 +28,9 @@ const PreSurveyScreen = () => {
         <Text style={styles.contentTitle}>Welcome!</Text>
         {fromIndex ? (
           <Text style={styles.contentText}>
-            It looks like it's been a while since we last checked your emissions.
-            Let's start with a few questions to update your carbon footprint calculation.
+            It looks like it's been a while since we last checked your
+            emissions. Let's start with a few questions to update your carbon
+            footprint calculation.
           </Text>
         ) : (
           <Text style={styles.contentText}>
