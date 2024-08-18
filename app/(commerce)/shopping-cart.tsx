@@ -32,43 +32,15 @@ export default function ShoppingCartScreen() {
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const [items, setItems] = useState<CartItemWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
-  const [paymentSheetInitialized, setPaymentSheetInitialized] = useState(false);
+  const [isUpdatingQuantity, setIsUpdatingQuantity] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
+  // Function to calculate cart total
   const getCartTotal = useCallback(() => {
     return items.reduce((total, item) => total + item.price * item.quantity, 0);
   }, [items]);
 
-  // Initialize PaymentSheet
-  const initializePaymentSheet = useCallback(async () => {
-    if (!auth.currentUser) {
-      return;
-    }
-
-    const { paymentIntent, ephemeralKey, customer } =
-      await fetchPaymentSheetParams(
-        getCartTotal(),
-        auth.currentUser?.uid || ""
-      );
-
-    const { error } = await initPaymentSheet({
-      merchantDisplayName: "Forevergreen",
-      customerId: customer,
-      customerEphemeralKeySecret: ephemeralKey,
-      paymentIntentClientSecret: paymentIntent,
-      allowsDelayedPaymentMethods: true,
-      defaultBillingDetails: {
-        name: "Jane Doe",
-      },
-    });
-
-    if (!error) {
-      setPaymentSheetInitialized(true);
-    } else {
-      console.error("Error initializing payment sheet:", error);
-      Alert.alert("Error", "Failed to initialize payment. Please try again.");
-    }
-  }, [auth.currentUser, getCartTotal, initPaymentSheet]);
-
+  // Fetch cart items and calculate total on page mount
   useEffect(() => {
     const fetchCartWithDetails = async () => {
       try {
@@ -91,36 +63,71 @@ export default function ShoppingCartScreen() {
     fetchCartWithDetails();
   }, []);
 
-  useEffect(() => {
-    if (!loading && items.length > 0) {
-      initializePaymentSheet();
+  // Initialize PaymentSheet
+  const initializePaymentSheet = useCallback(async () => {
+    if (!auth.currentUser) {
+      router.replace("/login");
     }
-  }, [loading, items, initializePaymentSheet]);
 
-  const openPaymentSheet = async () => {
-    if (!paymentSheetInitialized) {
-      await initializePaymentSheet();
+    // Fetch payment sheet parameters
+    try {
+      setIsProcessingPayment(true);
+      const { paymentIntent, ephemeralKey, customer } =
+        await fetchPaymentSheetParams(
+          getCartTotal(),
+          auth.currentUser?.uid || ""
+        );
+
+      // Stripe configuration to open the payment sheet
+      const { error } = await initPaymentSheet({
+        merchantDisplayName: "Forevergreen",
+        customerId: customer,
+        customerEphemeralKeySecret: ephemeralKey,
+        paymentIntentClientSecret: paymentIntent,
+        allowsDelayedPaymentMethods: true,
+        defaultBillingDetails: {
+          name: auth.currentUser?.displayName || "",
+          email: auth.currentUser?.email || "",
+        },
+        applePay: {
+          merchantCountryCode: "US",
+        },
+        googlePay: {
+          merchantCountryCode: "US",
+          testEnv: true, // use test environment
+        },
+        returnURL: "com.fgdevteam.fgreactapp://stripe-redirect",
+      });
+
+      if (error) {
+        console.error("Error initializing payment sheet:", error);
+        Alert.alert("Error", "Failed to initialize payment. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error initializing payment:", error);
+      Alert.alert("Error", "Failed to initialize payment. Please try again.");
+    } finally {
+      setIsProcessingPayment(false);
     }
+  }, [auth.currentUser, getCartTotal, initPaymentSheet]);
+
+  // Open payment sheet when user taps on "Buy Now"
+  const openPaymentSheet = async () => {
+    await initializePaymentSheet();
 
     const { error } = await presentPaymentSheet();
 
     if (error) {
       Alert.alert(`Error code: ${error.code}`, error.message);
     } else {
-      handlePurchase();
+      handleSuccessfulPurchase();
     }
   };
 
-  const handlePurchase = async () => {
-    if (items.length === 0) {
-      Alert.alert(
-        "Empty Cart",
-        "Please add items to your cart before purchasing."
-      );
-      return;
-    }
-
+  // Successful purchase logic
+  const handleSuccessfulPurchase = async () => {
     try {
+      setIsProcessingPayment(true);
       const result = await purchaseCarbonCredits(
         auth.currentUser?.uid || "",
         items
@@ -135,7 +142,7 @@ export default function ShoppingCartScreen() {
           "Your carbon credits have been added to your account."
         );
         router.push({
-          pathname: "purchase-complete",
+          pathname: "/purchase-complete",
           params: { transactionId: result.transactionId },
         });
       } else {
@@ -147,11 +154,15 @@ export default function ShoppingCartScreen() {
         "Purchase Failed",
         "There was an error processing your purchase. Please try again."
       );
+    } finally {
+      setIsProcessingPayment(false);
     }
   };
 
+  // Increment quantity of a cart item
   const handleIncrementQuantity = async (itemId: string) => {
     try {
+      setIsUpdatingQuantity(true);
       await incrementQuantity(itemId);
       const updatedCart = await getCart();
       const updatedItemsWithDetails = await Promise.all(
@@ -161,15 +172,18 @@ export default function ShoppingCartScreen() {
         })
       );
       setItems(updatedItemsWithDetails as CartItemWithDetails[]);
-      setPaymentSheetInitialized(false); // Reset payment sheet initialization
     } catch (error) {
       console.error("Error incrementing quantity:", error);
       Alert.alert("Error", "Failed to update quantity. Please try again.");
+    } finally {
+      setIsUpdatingQuantity(false);
     }
   };
 
+  // Decrement quantity of a cart item
   const handleDecrementQuantity = async (itemId: string) => {
     try {
+      setIsUpdatingQuantity(true);
       await decrementQuantity(itemId);
       const updatedCart = await getCart();
       const updatedItemsWithDetails = await Promise.all(
@@ -179,13 +193,15 @@ export default function ShoppingCartScreen() {
         })
       );
       setItems(updatedItemsWithDetails as CartItemWithDetails[]);
-      setPaymentSheetInitialized(false); // Reset payment sheet initialization
     } catch (error) {
       console.error("Error decrementing quantity:", error);
       Alert.alert("Error", "Failed to update quantity. Please try again.");
+    } finally {
+      setIsUpdatingQuantity(false);
     }
   };
 
+  // Render cart items
   const renderItem = ({ item }: { item: CartItemWithDetails }) => (
     <View style={styles.itemContainer}>
       <View style={styles.itemInfo}>
@@ -238,6 +254,7 @@ export default function ShoppingCartScreen() {
     </>
   );
 
+  // TODO: This needs some flair
   const ListEmptyComponent = () => (
     <View style={styles.emptyCartContainer}>
       <Text style={styles.emptyCartText}>Your cart is empty</Text>
@@ -253,16 +270,21 @@ export default function ShoppingCartScreen() {
       <TouchableOpacity
         style={[
           styles.purchaseButton,
-          items.length === 0 && styles.disabledButton,
+          (items.length === 0 || isUpdatingQuantity || isProcessingPayment) &&
+            styles.disabledButton,
         ]}
-        onPress={() => openPaymentSheet()}
-        disabled={items.length === 0 || loading}
+        onPress={openPaymentSheet}
+        disabled={
+          items.length === 0 || isUpdatingQuantity || isProcessingPayment
+        }
       >
-        <Text style={styles.purchaseButtonText}>Buy Now</Text>
+        <Text style={styles.purchaseButtonText}>
+          {isProcessingPayment ? "Processing..." : "Buy Now"}
+        </Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.continueButton}
-        onPress={() => router.navigate("carbon-credit")}
+        onPress={() => router.navigate("/carbon-credit")}
       >
         <Text style={styles.continueButtonText}>Continue Shopping</Text>
       </TouchableOpacity>

@@ -1,7 +1,7 @@
 import { useRootNavigationState, Redirect, router } from "expo-router";
 import { View, StyleSheet, TouchableOpacity, Text } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { getAuth } from "firebase/auth";
 import { fetchEmissionsData } from "@/api/emissions";
 import dayjs from "dayjs";

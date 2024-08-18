@@ -23,6 +23,7 @@ import {
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { fetchEmissionsData } from "./emissions";
 import { sendWelcomeEmail } from "./email";
+import { useStripe } from "@/utils/stripe";
 
 /* Function to sign up the user with the email and password */
 const onSignup = async (email: string, password: string, name: string) => {
@@ -235,28 +236,16 @@ const onGoogleLogin = async () => {
   }
 };
 
-const handleLogout = () => {
+const logout = () => {
   const auth = getAuth();
-
-  Alert.alert("Logout", "Are you sure you want to logout?", [
-    {
-      text: "Cancel",
-      style: "cancel",
-    },
-    {
-      text: "Logout",
-      onPress: () => {
-        signOut(auth)
-          .then(() => {
-            router.dismissAll();
-          })
-          .catch((error) => {
-            Alert.alert("Error", "Failed to logout. Please try again.");
-            console.error("Error: Failed to logout. Please try again.");
-          });
-      },
-    },
-  ]);
+  signOut(auth)
+    .then(() => {
+      router.dismissAll();
+    })
+    .catch((error) => {
+      Alert.alert("Error", "Failed to logout. Please try again.");
+      console.error("Error: Failed to logout. Please try again.");
+    });
 };
 
 const handleResetPassword = (email: string) => {
@@ -288,6 +277,6 @@ export {
   onContinueAnonymously,
   onLogin,
   onGoogleLogin,
-  handleLogout,
+  logout,
   handleResetPassword,
 };

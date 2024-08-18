@@ -119,6 +119,7 @@ async function fetchPaymentSheetParams(
       amount: amount,
       currency: "usd",
     });
+    console.log("New session doc:", newSessionDoc);
 
     // Poll for the additional fields
     const maxAttempts = 10;
@@ -126,6 +127,8 @@ async function fetchPaymentSheetParams(
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       await new Promise((resolve) => setTimeout(resolve, delayMs));
+      console.log("Polling for additional fields...");
+      console.log("Attempt:", attempt);
 
       const updatedDoc = await getDoc(newSessionDoc);
       const data = updatedDoc.data();
@@ -135,6 +138,7 @@ async function fetchPaymentSheetParams(
         data?.ephemeralKeySecret &&
         data?.customer
       ) {
+        console.log("Additional fields added to the session:", data);
         return {
           paymentIntent: data.paymentIntentClientSecret,
           ephemeralKey: data.ephemeralKeySecret,
