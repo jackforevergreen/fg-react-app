@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  ActivityIndicator,
   ScrollView,
 } from "react-native";
 import { BackButton } from "@/components/common";
