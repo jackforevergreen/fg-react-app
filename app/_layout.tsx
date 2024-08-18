@@ -137,29 +137,23 @@ export default function RootLayout() {
   if (!loaded) {
     return null;
   }
-  const StackComponent = (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-      }}
-    >
-      <Stack.Screen name="+not-found" />
-      <Stack.Screen name="index" />
-    </Stack>
-  );
 
   return (
     <PaperProvider>
-      {Platform.OS === "ios" || Platform.OS === "android" ? (
-        <StripeProvider
-          publishableKey="pk_test_51Pch2uJNQHxtxrkGVjNCflMy3L4mKNxA76N3W7vyowpCgVtKsisTowCdORHOZjBYsPYhuukodKiGF6FBRpj6FJPD00H3lUT9fK"
-          merchantIdentifier="merchant.com.fgdevteam.fgreactapp"
+      <StripeProvider
+        publishableKey="pk_test_51Pch2uJNQHxtxrkGVjNCflMy3L4mKNxA76N3W7vyowpCgVtKsisTowCdORHOZjBYsPYhuukodKiGF6FBRpj6FJPD00H3lUT9fK"
+        merchantIdentifier="merchant.com.fgdevteam.fgreactapp"
+      >
+        <Stack
+          screenOptions={{
+            // Hide the header for all other routes.
+            headerShown: false,
+          }}
         >
-          {StackComponent}
-        </StripeProvider>
-      ) : (
-        StackComponent
-      )}
+          <Stack.Screen name="+not-found" />
+          <Stack.Screen name="index" />
+        </Stack>
+      </StripeProvider>
     </PaperProvider>
   );
 }
