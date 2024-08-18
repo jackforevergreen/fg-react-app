@@ -9,6 +9,9 @@ import {
 } from "react-native";
 
 const PreSurveyScreen = () => {
+  const params = router.getState().params; // Access the global router's state to get params
+  const fromIndex = params?.fromIndex === "true"; // Convert to boolean
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.circleBottom} />
@@ -22,12 +25,20 @@ const PreSurveyScreen = () => {
 
       <View style={styles.contentContainer}>
         <Text style={styles.contentTitle}>Welcome!</Text>
-        <Text style={styles.contentText}>
-          Before we begin, we'll ask you a few quick questions about your
-          transportation, diet, and energy use to help calculate your carbon
-          footprint. Completing this survey will give you personalized tips to
-          reduce your impact on the environment.
-        </Text>
+        {fromIndex ? (
+          <Text style={styles.contentText}>
+            It looks like it's been a while since we last checked your emissions.
+            Let's start with a few questions to update your carbon footprint calculation.
+          </Text>
+        ) : (
+          <Text style={styles.contentText}>
+            Before we begin, we'll ask you a few quick questions about your
+            transportation, diet, and energy use to help calculate your carbon
+            footprint. Completing this survey will give you personalized tips to
+            reduce your impact on the environment.
+          </Text>
+        )}
+
         <TouchableOpacity
           onPress={() => router.navigate("/transportation")}
           style={styles.button}

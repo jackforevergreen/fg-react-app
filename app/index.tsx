@@ -1,12 +1,51 @@
 import { useRootNavigationState, Redirect, router } from "expo-router";
 import { View, StyleSheet, TouchableOpacity, Text, Alert } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { getAuth } from "firebase/auth";
+import { fetchEmissionsData } from './emissions'; // Import the emissions function
+import dayjs from "dayjs";
+
+
 
 // Initialize debugMode with useState
 export default function Index() {
   const [debugMode, setDebugMode] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [hasCalculatedEmissions, setHasCalculatedEmissions] = useState(false);
   const rootNavigationState = useRootNavigationState();
+
+  useEffect(() => {
+    const checkUserStatus = async () => {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      
+      if (user) {
+        setIsLoggedIn(true);
+
+        const emissionsData = await fetchEmissionsData();
+        if (emissionsData) {
+          const lastUpdated = emissionsData.lastUpdated?.toDate();
+          const daysSinceLastUpdate = lastUpdated
+            ? dayjs().diff(dayjs(lastUpdated), 'day')
+            : null;
+
+          setHasCalculatedEmissions(daysSinceLastUpdate !== null && daysSinceLastUpdate <= 30);
+
+          if (daysSinceLastUpdate === null || daysSinceLastUpdate > 30) {
+            router.push({ pathname: "/pre-survey", params: { fromIndex: true } });
+          }
+        } else {
+          setHasCalculatedEmissions(false);
+          router.push({ pathname: "/pre-survey", params: { fromIndex: true } });
+        }
+      } else {
+        setIsLoggedIn(false);
+      }
+    };
+
+    checkUserStatus();
+  }, []);
 
   if (!rootNavigationState?.key) return null;
 
@@ -40,8 +79,15 @@ export default function Index() {
       </View>
     );
   } else {
-    // Implement regular app logic here
-    return <Redirect href="/get-started" />;
+    // Check if user is logged in and redirect accordingly
+    if (isLoggedIn) {
+      if (!hasCalculatedEmissions) {
+        return <Redirect href="/calculate-emissions" />; // Redirect to emissions calculation if not done this month
+      }
+      return <Redirect href="/home" />;
+    } else {
+      return <Redirect href="/login" />;
+    }
   }
 }
 
