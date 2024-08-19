@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/Feather";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth";
-import { router, useRouter } from "expo-router";
+import { Href, router, useRouter } from "expo-router";
 import { fetchEmissionsData } from "@/api/emissions";
 import { Image } from "expo-image";
 import { BackButton, PageHeader } from "@/components/common";
@@ -21,7 +21,7 @@ const blurhash =
 
 interface SettingsItemProps {
   title: string;
-  screen: string;
+  screen: Href<string>;
 }
 
 const SettingsItem: React.FC<SettingsItemProps> = ({ title, screen }) => (
@@ -75,12 +75,17 @@ export default function ProfileScreen() {
       {
         text: "Logout",
         onPress: async () => {
-          await resetPaymentSheetCustomer();
-          await logout();
+          try {
+            await resetPaymentSheetCustomer();
+            await logout();
+          } catch (error) {
+            console.error(error);
+          } finally {
+            router.replace("/get-started");
+          }
         },
       },
     ]);
-    router.replace("/login");
   };
 
   return (
@@ -138,16 +143,14 @@ export default function ProfileScreen() {
           </Text>
           <View style={styles.subscriptionButtons}>
             <TouchableOpacity
-              onPress={() =>
-                router.push("/(subscriptions)/subscriptions-settings")
-              }
+              onPress={() => router.push("/subscriptions-settings")}
               style={styles.subscriptionButton}
             >
               <Text style={styles.subscriptionEmoji}>⚙️</Text>
               <Text style={styles.subscriptionButtonText}>Settings</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => router.push("/(subscriptions)/subscriptions")}
+              onPress={() => router.push("/subscriptions")}
               style={styles.subscriptionButton}
             >
               <Text style={styles.subscriptionEmoji}>🛒</Text>
