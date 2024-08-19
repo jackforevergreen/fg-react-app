@@ -12,6 +12,8 @@ import {
   signOut,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
+  deleteUser,
+  reauthenticateWithCredential,
 } from "firebase/auth";
 import {
   getFirestore,
@@ -19,7 +21,6 @@ import {
   setDoc,
   getDoc,
   serverTimestamp,
-  updateDoc,
 } from "firebase/firestore";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { fetchEmissionsData } from "./emissions";
@@ -248,6 +249,25 @@ const handleResetPassword = async (email: string) => {
   }
 };
 
+const deleteUserAccount = async () => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+
+  if (!user) {
+    throw new Error("No user is currently signed in.");
+  }
+
+  try {
+    // Delete the user's authentication account
+    await deleteUser(user);
+
+    console.log("User account deleted successfully");
+  } catch (error: any) {
+    console.error("Error deleting user account:", error);
+    throw error;
+  }
+};
+
 export {
   onSignup,
   onGoogleSignUp,
@@ -256,4 +276,5 @@ export {
   onGoogleLogin,
   logout,
   handleResetPassword,
+  deleteUserAccount,
 };
