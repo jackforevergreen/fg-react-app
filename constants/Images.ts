@@ -1,5 +1,4 @@
 const Earth = require("../assets/images/earth.png");
-const FgCoin = require("../assets/images/fg-coin.png");
 const TreeLogo = require("../assets/images/tree-logo.png");
 const Map = require("../assets/images/map.png");
 const CostaRica = require("../assets/images/costa-rica.png");
@@ -12,7 +11,6 @@ const Pamona = require("../assets/images/pamona.png");
 
 export {
   Earth,
-  FgCoin,
   TreeLogo,
   Map,
   CostaRica,

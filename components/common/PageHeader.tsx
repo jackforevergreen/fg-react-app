@@ -30,7 +30,8 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
   },
   header: {
-    padding: 24,
+    paddingTop: 24,
+    paddingHorizontal: 24,
   },
   headerContent: {
     alignItems: "center",

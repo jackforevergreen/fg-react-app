@@ -1,13 +1,13 @@
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import "react-native-reanimated";
 import { PaperProvider } from "react-native-paper";
-import { Alert, PermissionsAndroid, Platform } from "react-native";
+import { Alert, Linking, PermissionsAndroid, Platform } from "react-native";
 import messaging from "@react-native-firebase/messaging";
-import { StripeProvider } from "@/utils/stripe";
-import { initializeFirebase } from "@/config/firebaseConfig";
+import { StripeProvider, useStripe } from "@/utils/stripe";
+import { initializeFirebase } from "@/utils/firebaseConfig";
 
 export default function RootLayout() {
   initializeFirebase();
@@ -87,6 +87,44 @@ export default function RootLayout() {
       return unsubscribe;
     }
   }, [loaded]);
+
+  const { handleURLCallback } = useStripe();
+
+  const handleDeepLink = useCallback(
+    async (url: string) => {
+      if (url) {
+        const stripeHandled = await handleURLCallback(url);
+        if (stripeHandled) {
+          // This was a Stripe URL - you can return or add extra handling here as you see fit
+        } else {
+          // This was not a Stripe URL - you can return or add extra handling here as you see fit
+          // For example, you could use the URL to navigate to a specific screen in your app
+          // router.push(url);
+        }
+      }
+    },
+    [handleURLCallback]
+  );
+
+  useEffect(() => {
+    const getUrlAsync = async () => {
+      const initialUrl = await Linking.getInitialURL();
+      handleDeepLink(initialUrl || "");
+    };
+
+    getUrlAsync();
+
+    const deepLinkListener = Linking.addEventListener(
+      "url",
+      (event: { url: string }) => {
+        handleDeepLink(event.url);
+      }
+    );
+
+    return () => {
+      deepLinkListener.remove();
+    };
+  }, [handleDeepLink]);
 
   if (!loaded) {
     return null;
