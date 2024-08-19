@@ -12,7 +12,7 @@ import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 import { router, useRouter } from "expo-router";
 import { fetchEmissionsData } from "@/api/emissions";
 import { Image } from "expo-image";
-import { BackButton } from "@/components/common";
+import { BackButton, PageHeader } from "@/components/common";
 import { logout } from "@/api/auth";
 import { useStripe } from "@/utils/stripe";
 
@@ -85,89 +85,87 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView style={styles.container}>
+      <PageHeader subtitle="Settings" />
       <BackButton />
-      <View style={styles.header}>
-        <Text style={styles.title}>
-          Forever<Text style={styles.greenText}>green</Text>
-        </Text>
-        <Text style={styles.subtitle}>Settings</Text>
-      </View>
-
-      <View style={styles.profileInfo}>
-        <View style={styles.profileImageBG}>
-          {profileIcon ? (
-            <Image
-              style={styles.profileImage}
-              source={{ uri: profileIcon }}
-              placeholder={blurhash}
-              contentFit="cover"
-            />
-          ) : (
-            <Text style={styles.profileEmoji}>👤</Text>
-          )}
-        </View>
-        <View style={styles.profileTextContainer}>
-          <Text style={styles.profileName}>{user?.displayName || "Guest"}</Text>
-          <Text style={styles.profileEmail}>{user?.email || ""}</Text>
-        </View>
-      </View>
-
-      <SettingsItem title="Profile Settings" screen="/profile-settings" />
-      <SettingsItem title="Payment Methods" screen="/payment-methods" />
-      <SettingsItem title="Purchase History" screen="/purchase-history" />
-      <SettingsItem title="Notifications" screen="/notifications-settings" />
-
-      <View style={styles.carbonFootprint}>
-        <Text style={styles.carbonFootprintTitle}>
-          Your carbon footprint...
-        </Text>
-        <View style={styles.carbonFootprintContent}>
-          <Text style={styles.emissionText}>
-            {totalEmissions.toFixed(2)}
-            <Text style={styles.emissionUnit}> tons of CO₂</Text>
-          </Text>
-          <TouchableOpacity
-            onPress={() => router.push("/offset-now")}
-            style={styles.offsetButton}
-          >
-            <Text style={styles.offsetButtonText}>Offset Now!</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={styles.manageSubscriptions}>
-        <Text style={styles.manageSubscriptionsTitle}>
-          Manage Subscriptions
-        </Text>
-        <View style={styles.subscriptionButtons}>
-          <TouchableOpacity
-            onPress={() =>
-              router.push("/(subscriptions)/subscriptions-settings")
-            }
-            style={styles.subscriptionButton}
-          >
-            <Text style={styles.subscriptionEmoji}>⚙️</Text>
-            <Text style={styles.subscriptionButtonText}>Settings</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => router.push("/(subscriptions)/subscriptions")}
-            style={styles.subscriptionButton}
-          >
-            <Text style={styles.subscriptionEmoji}>🛒</Text>
-            <Text style={styles.subscriptionButtonText}>
-              View Subscriptions
+      <View style={styles.profileContainer}>
+        <View style={styles.profileInfo}>
+          <View style={styles.profileImageBG}>
+            {profileIcon ? (
+              <Image
+                style={styles.profileImage}
+                source={{ uri: profileIcon }}
+                placeholder={blurhash}
+                contentFit="cover"
+              />
+            ) : (
+              <Text style={styles.profileEmoji}>👤</Text>
+            )}
+          </View>
+          <View style={styles.profileTextContainer}>
+            <Text style={styles.profileName}>
+              {user?.displayName || "Guest"}
             </Text>
-          </TouchableOpacity>
+            <Text style={styles.profileEmail}>{user?.email || ""}</Text>
+          </View>
         </View>
+
+        <SettingsItem title="Profile Settings" screen="/profile-settings" />
+        <SettingsItem title="Payment Methods" screen="/payment-methods" />
+        <SettingsItem title="Purchase History" screen="/purchase-history" />
+        <SettingsItem title="Notifications" screen="/notifications-settings" />
+
+        <View style={styles.carbonFootprint}>
+          <Text style={styles.carbonFootprintTitle}>
+            Your carbon footprint...
+          </Text>
+          <View style={styles.carbonFootprintContent}>
+            <Text style={styles.emissionText}>
+              {totalEmissions.toFixed(2)}
+              <Text style={styles.emissionUnit}> tons of CO₂</Text>
+            </Text>
+            <TouchableOpacity
+              onPress={() => router.push("/offset-now")}
+              style={styles.offsetButton}
+            >
+              <Text style={styles.offsetButtonText}>Offset Now!</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.manageSubscriptions}>
+          <Text style={styles.manageSubscriptionsTitle}>
+            Manage Subscriptions
+          </Text>
+          <View style={styles.subscriptionButtons}>
+            <TouchableOpacity
+              onPress={() =>
+                router.push("/(subscriptions)/subscriptions-settings")
+              }
+              style={styles.subscriptionButton}
+            >
+              <Text style={styles.subscriptionEmoji}>⚙️</Text>
+              <Text style={styles.subscriptionButtonText}>Settings</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => router.push("/(subscriptions)/subscriptions")}
+              style={styles.subscriptionButton}
+            >
+              <Text style={styles.subscriptionEmoji}>🛒</Text>
+              <Text style={styles.subscriptionButtonText}>
+                View Subscriptions
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+          <Text style={styles.logoutButtonText}>Logout</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.deleteAccountButton}>
+          <Text style={styles.deleteAccountButtonText}>Delete Account</Text>
+        </TouchableOpacity>
       </View>
-
-      <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-        <Text style={styles.logoutButtonText}>Logout</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.deleteAccountButton}>
-        <Text style={styles.deleteAccountButtonText}>Delete Account</Text>
-      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -176,23 +174,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
+  },
+  profileContainer: {
     paddingHorizontal: 20,
-  },
-  header: {
-    alignItems: "center",
-  },
-  title: {
-    fontSize: 40,
-    fontWeight: "800",
-  },
-  greenText: {
-    color: "#409858",
-    fontWeight: "600",
-  },
-  subtitle: {
-    fontSize: 24,
-    fontWeight: "700",
-    marginBottom: 12,
   },
   profileInfo: {
     padding: 8,

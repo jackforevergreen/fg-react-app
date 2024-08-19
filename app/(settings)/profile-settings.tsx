@@ -12,7 +12,7 @@ import { Image } from "expo-image";
 import { getAuth, updateProfile } from "firebase/auth";
 import * as ImagePicker from "expo-image-picker";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { BackButton } from "@/components/common";
+import { BackButton, PageHeader } from "@/components/common";
 import { Feather } from "@expo/vector-icons";
 
 export default function ProfileSettings() {
@@ -79,52 +79,52 @@ export default function ProfileSettings() {
 
   return (
     <ScrollView style={styles.container}>
+      <PageHeader subtitle="Profile Settings" />
       <BackButton />
-      <View style={styles.header}>
-        <Text style={styles.title}>
-          Forever<Text style={styles.greenText}>green</Text>
-        </Text>
-        <Text style={styles.subtitle}>Profile Settings</Text>
-      </View>
 
-      <View style={styles.profileImageContainer}>
-        <TouchableOpacity style={styles.profileImageButton} onPress={pickImage}>
-          {profileImage ? (
-            <>
-              <Image
-                style={styles.profileImage}
-                source={{ uri: profileImage }}
-                contentFit="cover"
-              />
-              <View style={styles.iconOverlay}>
-                <Feather name="edit-2" size={24} color="white" />
-              </View>
-            </>
-          ) : (
-            <>
-              <Text style={styles.profileImageText}>+</Text>
-              <Text style={styles.uploadText}>Upload a profile picture!</Text>
-            </>
-          )}
+      <View style={{ paddingHorizontal: 20 }}>
+        <View style={styles.profileImageContainer}>
+          <TouchableOpacity
+            style={styles.profileImageButton}
+            onPress={pickImage}
+          >
+            {profileImage ? (
+              <>
+                <Image
+                  style={styles.profileImage}
+                  source={{ uri: profileImage }}
+                  contentFit="cover"
+                />
+                <View style={styles.iconOverlay}>
+                  <Feather name="edit-2" size={24} color="white" />
+                </View>
+              </>
+            ) : (
+              <>
+                <Text style={styles.profileImageText}>+</Text>
+                <Text style={styles.uploadText}>Upload a profile picture!</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.form}>
+          <Text style={styles.label}>Display Name</Text>
+          <TextInput
+            style={styles.input}
+            value={displayName}
+            onChangeText={setDisplayName}
+            placeholder="Enter your name"
+          />
+
+          <Text style={styles.label}>Email</Text>
+          <Text style={styles.emailText}>{user?.email}</Text>
+        </View>
+
+        <TouchableOpacity style={styles.saveButton} onPress={saveProfile}>
+          <Text style={styles.saveButtonText}>Save</Text>
         </TouchableOpacity>
       </View>
-
-      <View style={styles.form}>
-        <Text style={styles.label}>Display Name</Text>
-        <TextInput
-          style={styles.input}
-          value={displayName}
-          onChangeText={setDisplayName}
-          placeholder="Enter your name"
-        />
-
-        <Text style={styles.label}>Email</Text>
-        <Text style={styles.emailText}>{user?.email}</Text>
-      </View>
-
-      <TouchableOpacity style={styles.saveButton} onPress={saveProfile}>
-        <Text style={styles.saveButtonText}>Save</Text>
-      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -133,23 +133,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
-    paddingHorizontal: 20,
-  },
-  header: {
-    alignItems: "center",
-  },
-  title: {
-    fontSize: 40,
-    fontWeight: "800",
-  },
-  greenText: {
-    color: "#409858",
-    fontWeight: "600",
-  },
-  subtitle: {
-    fontSize: 24,
-    fontWeight: "700",
-    marginBottom: 30,
   },
   profileImageContainer: {
     alignItems: "center",
