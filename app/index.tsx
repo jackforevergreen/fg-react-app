@@ -6,6 +6,8 @@ import { getAuth } from "firebase/auth";
 import { fetchEmissionsData } from "@/api/emissions";
 import dayjs from "dayjs";
 import { Loading } from "@/components/common";
+import { initializeFirebase } from "../utils/firebaseConfig"; // Import your Firebase config
+import * as Analytics from "expo-firebase-analytics"; // Import Expo Firebase Analytics
 
 // Initialize debugMode with useState
 export default function Index() {
@@ -53,7 +55,7 @@ export default function Index() {
       }
       setLoading(false);
     };
-
+    initializeFirebase();
     checkUserStatus();
   }, []);
 

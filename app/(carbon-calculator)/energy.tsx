@@ -19,6 +19,8 @@ import {
 } from "@/components/carbon-calculator";
 import { useEmissions } from "@/contexts";
 import { saveEmissionsData } from "@/api/emissions";
+import * as Analytics from 'expo-firebase-analytics'; // Import Expo Firebase Analytics
+
 
 export default function EnergyCalculator() {
   const {
@@ -176,7 +178,15 @@ export default function EnergyCalculator() {
     dietEmissions,
     energyEmissions,
   ]);
-
+  // Analytics tracking
+  const logCalculationToAnalytics = async (data: any) => {
+    try {
+      await Analytics.logEvent('energy_emission_calculated', data);
+      console.log('Event logged: energy_emission_calculated');
+    } catch (error) {
+      console.error('Error logging event: ', error);
+    }
+  };
   // Progress tracking
   const [progress, setProgress] = useState(0.66);
   const updateProgress = useCallback(() => {

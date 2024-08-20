@@ -4,6 +4,8 @@ import { initializeAuth } from "firebase/auth";
 import { getReactNativePersistence } from "@firebase/auth/dist/rn/index.js";
 import { initializeFirestore } from "firebase/firestore";
 import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
+import * as Analytics from "expo-firebase-analytics";
+
 
 const initializeFirebase = () => {
   // Initialize Firebase
@@ -24,6 +26,8 @@ const initializeFirebase = () => {
       persistence: getReactNativePersistence(ReactNativeAsyncStorage),
     });
     initializeFirestore(app, {});
+    // Initialize Analytics using expo-firebase-analytics
+    Analytics.setAnalyticsCollectionEnabled(true);
   }
 };
 
