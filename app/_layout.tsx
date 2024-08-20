@@ -12,12 +12,6 @@ import { initializeFirebase } from "@/utils/firebaseConfig";
 export default function RootLayout() {
   initializeFirebase();
 
-  if (Platform.OS === "android") {
-    PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
-    );
-  }
-
   async function requestUserPermission(): Promise<boolean> {
     const authStatus = await messaging().requestPermission();
     const enabled =
@@ -29,6 +23,16 @@ export default function RootLayout() {
     return enabled;
   }
 
+  const setupMessaging = async () => {
+    const permissionGranted = await requestUserPermission();
+    if (permissionGranted) {
+      const token = await messaging().getToken();
+      console.log("Token:" + token);
+    } else {
+      console.log("Permission not granted");
+    }
+  };
+
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
@@ -38,16 +42,11 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
 
-    if (Platform.OS === "android" || Platform.OS === "ios") {
-      const setupMessaging = async () => {
-        const permissionGranted = await requestUserPermission();
-        if (permissionGranted) {
-          const token = await messaging().getToken();
-          console.log(token);
-        } else {
-          console.log("Permission not granted");
-        }
-      };
+    if (Platform.OS === "android") {
+      PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
+      );
+    } else if (Platform.OS === "ios") {
       setupMessaging();
 
       // Check whether an initial notification is available
