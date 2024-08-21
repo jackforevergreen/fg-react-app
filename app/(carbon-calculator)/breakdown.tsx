@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import {
 } from "@/components/breakdown";
 import CalculatingScreen from "@/components/carbon-calculator/Calculating";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
+import ConfettiCannon from 'react-native-confetti-cannon';
 
 export default function Breakdown() {
   const [emissionsPerYear, setEmissionsPerYear] = useState(0.0);
@@ -26,6 +27,10 @@ export default function Breakdown() {
   const [dietEmissions, setDietEmissions] = useState(0.0);
   const [energyEmissions, setEnergyEmissions] = useState(0.0);
   const [retryCount, setRetryCount] = useState(0);
+  const [showConfetti, setShowConfetti] = useState(true); // Control visibility of confetti
+  const explosionRef = useRef(null);
+
+
 
   useEffect(() => {
     const loadData = async () => {
@@ -36,6 +41,7 @@ export default function Breakdown() {
         setTransportationEmissions(totalData.transportationEmissions);
         setDietEmissions(totalData.dietEmissions);
         setEnergyEmissions(totalData.energyEmissions);
+        explosionRef.current?.start(); // Trigger confetti when data is loaded
       } else if (retryCount < 3) {
         setTimeout(() => {
           setRetryCount((prevCount) => prevCount + 1);
@@ -62,175 +68,201 @@ export default function Breakdown() {
     return () => unsubscribe();
   }, [retryCount]);
 
+  useEffect(() => {
+    if (showConfetti) {
+      const timeout = setTimeout(() => {
+        setShowConfetti(false);  // Hide confetti after 3 seconds
+      }, 3000); // Match this duration with your confetti fallSpeed
+  
+      return () => clearTimeout(timeout); // Cleanup timeout
+    }
+  }, [showConfetti]);
+
   if (!emissionsPerYear) {
     return <CalculatingScreen />;
   }
 
   return (
-    <ScrollView style={styles.scrollView}>
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Icon
-            name="arrow-left"
-            size={24}
-            color="black"
-            onPress={() => router.back()}
-          />
-          <Text style={styles.headerTitle}>Results</Text>
+    <View style={{ flex: 1 }}>
+      <ScrollView style={styles.scrollView}>
+        <View style={styles.container}>
+          {/* Header */}
+          <View style={styles.header}>
+            <Icon
+              name="arrow-left"
+              size={24}
+              color="black"
+              onPress={() => router.back()}
+            />
+            <Text style={styles.headerTitle}>Results</Text>
+          </View>
+
+          <View style={styles.contentContainer}>
+            {/* Carbon Footprint */}
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Your Carbon Footprint</Text>
+              <Text>Your total emissions are:</Text>
+              <Text style={styles.greenText}>
+                {emissionsPerYear.toFixed(2)} tons co2/year
+              </Text>
+              <Text>Your total monthly emissions are:</Text>
+              <Text style={styles.greenText}>
+                {emissionsPerMonth.toFixed(2)} tons co2/month
+              </Text>
+            </View>
+
+            {/* Emission Breakdown */}
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Your Emission Breakdown</Text>
+              <View style={{ alignItems: "center", marginBottom: 16 }}>
+                <PieChartBreakdown
+                  names={["Transportation", "Diet", "Energy"]}
+                  values={[
+                    transportationEmissions,
+                    dietEmissions,
+                    energyEmissions,
+                  ]}
+                  colors={["#44945F", "#AEDCA7", "#66A570"]}
+                  height={220}
+                  width={screenWidth}
+                />
+              </View>
+              <View style={styles.legendContainer}>
+                {[
+                  { name: "Transportation", color: "#44945F" },
+                  { name: "Diet", color: "#AEDCA7" },
+                  { name: "Energy", color: "#66A570" },
+                ].map((item, index) => (
+                  <View key={index} style={styles.legendItem}>
+                    <View
+                      style={[
+                        styles.legendColor,
+                        { backgroundColor: item.color },
+                      ]}
+                    />
+                    <Text>{item.name}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+
+            {/* Average American */}
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>You vs the Average American</Text>
+              <View style={styles.legendContainer}>
+                {[
+                  { name: "You", color: "#44945F" },
+                  { name: "Average American", color: "#A9A9A9" },
+                ].map((item, index) => (
+                  <View key={index} style={styles.legendItem}>
+                    <View
+                      style={[
+                        styles.legendColor,
+                        { backgroundColor: item.color },
+                      ]}
+                    />
+                    <Text>{item.name}</Text>
+                  </View>
+                ))}
+              </View>
+              <View
+                style={{
+                  flex: 1,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <BarChartBreakdown
+                  names={["You", "Average American"]}
+                  values={[emissionsPerYear, 21]}
+                  colors={["#44945F", "#A9A9A9"]}
+                />
+              </View>
+            </View>
+
+            {/* Earth Breakdown */}
+            <View style={styles.card}>
+              <Text style={styles.earthBreakdownTitle}>Earth Breakdown</Text>
+              <Text style={styles.earthBreakdownText}>
+                If everyone lived like you we would need{" "}
+                {(emissionsPerYear / 6.4).toFixed(2)} Earths!
+              </Text>
+              <EarthBreakdown emissions={emissionsPerYear} />
+            </View>
+
+            {/* Call to Action */}
+            <View style={styles.card}>
+              <Text style={styles.ctaTitle}>
+                Help us help you change the World 🌍
+              </Text>
+              <Text style={styles.ctaText}>
+                Support green projects around the world!
+              </Text>
+
+              <TouchableOpacity
+                onPress={() => {
+                  if (isAnonymous) {
+                    router.push("/signup");
+                  } else {
+                    router.push("/offset-now");
+                  }
+                }}
+                style={styles.ctaButton}
+              >
+                <Text style={styles.ctaButtonText}>Learn More</Text>
+              </TouchableOpacity>
+              <Text style={styles.ctaText}>
+                Build your legacy and leave a lasting impact by planting your own
+                forest.
+              </Text>
+
+              <TouchableOpacity
+                onPress={() => {
+                  if (isAnonymous) {
+                    router.push("/signup");
+                  } else {
+                    router.replace("/tree-planting");
+                  }
+                }}
+                style={styles.ctaButton}
+              >
+                <Text style={styles.ctaButtonText}>Start the Pledge today!</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
-
-        <View style={styles.contentContainer}>
-          {/* Carbon Footprint */}
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Your Carbon Footprint</Text>
-            <Text>Your total emissions are:</Text>
-            <Text style={styles.greenText}>
-              {emissionsPerYear.toFixed(2)} tons co2/year
-            </Text>
-            <Text>Your total monthly emissions are:</Text>
-            <Text style={styles.greenText}>
-              {emissionsPerMonth.toFixed(2)} tons co2/month
-            </Text>
-          </View>
-
-          {/* Emission Breakdown */}
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Your Emission Breakdown</Text>
-            <View style={{ alignItems: "center", marginBottom: 16 }}>
-              <PieChartBreakdown
-                names={["Transportation", "Diet", "Energy"]}
-                values={[
-                  transportationEmissions,
-                  dietEmissions,
-                  energyEmissions,
-                ]}
-                colors={["#44945F", "#AEDCA7", "#66A570"]}
-                height={220}
-                width={screenWidth}
-              />
+        {/* Next Button */}
+        <View style={styles.nextButton}>
+          <TouchableOpacity
+            onPress={() => {
+              if (isAnonymous) {
+                router.push("/signup");
+              } else {
+                router.replace("/home");
+              }
+            }}
+          >
+            <View style={styles.nextButtonInner}>
+              <Icon name="arrow-right" size={30} color={"#000"} />
             </View>
-            <View style={styles.legendContainer}>
-              {[
-                { name: "Transportation", color: "#44945F" },
-                { name: "Diet", color: "#AEDCA7" },
-                { name: "Energy", color: "#66A570" },
-              ].map((item, index) => (
-                <View key={index} style={styles.legendItem}>
-                  <View
-                    style={[
-                      styles.legendColor,
-                      { backgroundColor: item.color },
-                    ]}
-                  />
-                  <Text>{item.name}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-
-          {/* Average American */}
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>You vs the Average American</Text>
-            <View style={styles.legendContainer}>
-              {[
-                { name: "You", color: "#44945F" },
-                { name: "Average American", color: "#A9A9A9" },
-              ].map((item, index) => (
-                <View key={index} style={styles.legendItem}>
-                  <View
-                    style={[
-                      styles.legendColor,
-                      { backgroundColor: item.color },
-                    ]}
-                  />
-                  <Text>{item.name}</Text>
-                </View>
-              ))}
-            </View>
-            <View
-              style={{
-                flex: 1,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <BarChartBreakdown
-                names={["You", "Average American"]}
-                values={[emissionsPerYear, 21]}
-                colors={["#44945F", "#A9A9A9"]}
-              />
-            </View>
-          </View>
-
-          {/* Earth Breakdown */}
-          <View style={styles.card}>
-            <Text style={styles.earthBreakdownTitle}>Earth Breakdown</Text>
-            <Text style={styles.earthBreakdownText}>
-              If everyone lived like you we would need{" "}
-              {(emissionsPerYear / 6.4).toFixed(2)} Earths!
-            </Text>
-            <EarthBreakdown emissions={emissionsPerYear} />
-          </View>
-
-          {/* Call to Action */}
-          <View style={styles.card}>
-            <Text style={styles.ctaTitle}>
-              Help us help you change the World 🌍
-            </Text>
-            <Text style={styles.ctaText}>
-              Support green projects around the world!
-            </Text>
-
-            <TouchableOpacity
-              onPress={() => {
-                if (isAnonymous) {
-                  router.push("/signup");
-                } else {
-                  router.push("/offset-now");
-                }
-              }}
-              style={styles.ctaButton}
-            >
-              <Text style={styles.ctaButtonText}>Learn More</Text>
-            </TouchableOpacity>
-            <Text style={styles.ctaText}>
-              Build your legacy and leave a lasting impact by planting your own
-              forest.
-            </Text>
-
-            <TouchableOpacity
-              onPress={() => {
-                if (isAnonymous) {
-                  router.push("/signup");
-                } else {
-                  router.replace("/tree-planting");
-                }
-              }}
-              style={styles.ctaButton}
-            >
-              <Text style={styles.ctaButtonText}>Start the Pledge today!</Text>
-            </TouchableOpacity>
-          </View>
+          </TouchableOpacity>
         </View>
+      </ScrollView>
+      {showConfetti && (
+      <View style={styles.confettiContainer}>
+        <ConfettiCannon
+          count={200}
+          origin={{ x: screenWidth / 2, y: 0 }}
+          autoStart={false}
+          ref={explosionRef}
+          fadeOut
+          fallSpeed={2000}
+          explosionSpeed={1}
+        />
       </View>
-      {/* Next Button */}
-      <View style={styles.nextButton}>
-        <TouchableOpacity
-          onPress={() => {
-            if (isAnonymous) {
-              router.push("/signup");
-            } else {
-              router.replace("/home");
-            }
-          }}
-        >
-          <View style={styles.nextButtonInner}>
-            <Icon name="arrow-right" size={30} color={"#000"} />
-          </View>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+    )}
+    </View> 
+      
   );
 }
 
@@ -343,4 +375,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  confettiContainer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1000,  // Ensure it is on top of everything else
+  }
 });
