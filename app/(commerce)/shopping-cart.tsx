@@ -91,12 +91,14 @@ export default function ShoppingCartScreen() {
         },
         applePay: {
           merchantCountryCode: "US",
+          testEnv: true,
         },
         googlePay: {
           merchantCountryCode: "US",
           testEnv: true, // use test environment
         },
         returnURL: "com.fgdevteam.fgreactapp://stripe-redirect",
+
       });
 
       if (error) {

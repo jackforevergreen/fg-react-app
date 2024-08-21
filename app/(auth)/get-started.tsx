@@ -3,10 +3,11 @@ import { View, Text, StatusBar, Image, TouchableOpacity } from "react-native";
 import { router } from "expo-router";
 import { StyleSheet } from "react-native";
 import { TreeLogo } from "@/constants/Images";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function GetStartedScreen() {
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
       <View style={styles.contentContainer}>
         <Text style={styles.title}>
@@ -31,7 +32,7 @@ export default function GetStartedScreen() {
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -39,8 +40,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
-    alignItems: "center",
-    justifyContent: "center",
     paddingHorizontal: 20,
   },
   contentContainer: {
@@ -52,7 +51,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 50,
     fontWeight: "bold",
-    marginVertical: 8,
   },
   titleHighlight: {
     color: "#409858",
@@ -63,7 +61,6 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     width: "100%",
-    marginBottom: 32,
   },
   button: {
     backgroundColor: "#409858",

@@ -30,7 +30,6 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
   },
   header: {
-    paddingTop: 24,
     paddingHorizontal: 24,
   },
   headerContent: {
