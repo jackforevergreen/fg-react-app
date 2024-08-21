@@ -32,9 +32,8 @@ export default function Index() {
             ? dayjs().diff(dayjs(lastUpdated), "day")
             : null;
 
-          setHasCalculatedEmissions(
-            daysSinceLastUpdate !== null && daysSinceLastUpdate <= 30
-          );
+          const hasCalculated = daysSinceLastUpdate !== null && daysSinceLastUpdate <= 30;
+          setHasCalculatedEmissions(hasCalculated);
 
           if (daysSinceLastUpdate === null || daysSinceLastUpdate > 30) {
             router.push({
@@ -44,7 +43,6 @@ export default function Index() {
           }
         } else {
           setHasCalculatedEmissions(false);
-
           router.push({
             pathname: "/pre-survey",
             params: { fromIndex: "true" },
@@ -102,7 +100,7 @@ export default function Index() {
       }
       return <Redirect href="/home" />;
     } else {
-      return <Redirect href="/login" />;
+      return <Redirect href="/get-started" />;
     }
   }
 }

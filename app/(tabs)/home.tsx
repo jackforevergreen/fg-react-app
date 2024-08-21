@@ -89,7 +89,7 @@ const HomeScreen = () => {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.calculatorBox}
-            onPress={() => router.push("/transportation")}
+            onPress={() => router.push("/pre-survey")}
           >
             <Text style={styles.boxTitle}>Calculate your impact</Text>
             <Pressable style={styles.calculator}>

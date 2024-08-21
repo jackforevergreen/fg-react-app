@@ -1,4 +1,5 @@
 import { Alert } from "react-native";
+import { router } from "expo-router";
 import {
   getAuth,
   createUserWithEmailAndPassword,
@@ -11,23 +12,84 @@ import {
   signOut,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
+  deleteUser,
+  reauthenticateWithCredential,
 } from "firebase/auth";
-import { router } from "expo-router";
 import {
   getFirestore,
   doc,
   setDoc,
+  getDoc,
   serverTimestamp,
-  updateDoc,
 } from "firebase/firestore";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { fetchEmissionsData } from "./emissions";
 import { sendWelcomeEmail } from "./email";
-import { useStripe } from "@/utils/stripe";
+
+// Helper function to check if a user exists in the database
+const checkUserExists = async (uid: string): Promise<boolean> => {
+  try {
+    const db = getFirestore();
+    const userRef = doc(db, "users", uid);
+    const userSnap = await getDoc(userRef);
+    return userSnap.exists();
+  } catch (error) {
+    console.error("Error checking if user exists:", error);
+    return false;
+  }
+};
+
+// Function to create a user profile
+const createUserProfile = async (userData: {
+  uid: string;
+  name?: string | null;
+  email?: string | null;
+  photoURL?: string | null;
+  isAnonymous?: boolean;
+}): Promise<void> => {
+  try {
+    const db = getFirestore();
+    const userDocRef = doc(db, "users", userData.uid);
+
+    await setDoc(
+      userDocRef,
+      {
+        name: userData.name || null,
+        email: userData.email || null,
+        photoURL: userData.photoURL || null,
+        createdAt: serverTimestamp(),
+        followers: [],
+        following: [],
+        followerCount: 0,
+        followingCount: 0,
+        isAnonymous: userData.isAnonymous || false,
+      },
+      { merge: true }
+    );
+
+    if (userData.email && userData.name) {
+      await sendWelcomeEmail(userData.email, userData.name);
+    }
+
+    console.log(`User profile created for UID: ${userData.uid}`);
+  } catch (error) {
+    console.error("Error creating user profile:", error);
+    throw error;
+  }
+};
+
+// Function to handle user redirection based on emissions data
+const handleUserRedirection = async () => {
+  const data = await fetchEmissionsData();
+  if (data) {
+    router.replace("/home");
+  } else {
+    router.replace("/pre-survey");
+  }
+};
 
 /* Function to sign up the user with the email and password */
 const onSignup = async (email: string, password: string, name: string) => {
-  const db = getFirestore();
   const auth = getAuth();
 
   try {
@@ -35,17 +97,11 @@ const onSignup = async (email: string, password: string, name: string) => {
       // Link anonymous account with email/password
       const credential = EmailAuthProvider.credential(email, password);
       await linkWithCredential(auth.currentUser, credential);
-
-      // Update user profile
-      await updateProfile(auth.currentUser, {
-        displayName: name,
-      });
-
-      // Update user document
-      const userDocRef = doc(db, "users", auth.currentUser.uid);
-      await updateDoc(userDocRef, {
-        name: name,
-        email: email,
+      await updateProfile(auth.currentUser, { displayName: name });
+      await createUserProfile({
+        uid: auth.currentUser.uid,
+        name,
+        email,
         isAnonymous: false,
       });
     } else {
@@ -55,39 +111,19 @@ const onSignup = async (email: string, password: string, name: string) => {
         email,
         password
       );
-      const user = userCredential.user;
-
-      await updateProfile(user, {
-        displayName: name,
-      });
-
-      const userDocRef = doc(db, "users", user.uid);
-      await setDoc(userDocRef, {
-        name: name,
-        email: email,
-        photoURL: null,
-        createdAt: serverTimestamp(),
-        followers: [],
-        following: [],
-        followerCount: 0,
-        followingCount: 0,
+      await updateProfile(userCredential.user, { displayName: name });
+      await createUserProfile({
+        uid: userCredential.user.uid,
+        name,
+        email,
         isAnonymous: false,
       });
     }
 
-    await sendWelcomeEmail(email, name);
-
-    const data = await fetchEmissionsData();
-    if (!data) {
-      router.replace("/pre-survey");
-    } else {
-      router.replace("/home");
-    }
+    await handleUserRedirection();
   } catch (error: any) {
-    const errorCode = error.code;
-    const errorMessage = error.message;
-    Alert.alert("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
-    console.error(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
+    Alert.alert("Error", `Code: ${error.code}\nMessage: ${error.message}`);
+    console.error(`Error: Code: ${error.code}\nMessage: ${error.message}`);
   }
 };
 
@@ -99,51 +135,31 @@ const onGoogleSignUp = async () => {
     const auth = getAuth();
     const credential = GoogleAuthProvider.credential(user.idToken);
 
+    let currentUser;
     if (auth.currentUser && auth.currentUser.isAnonymous) {
       // Link anonymous account with Google
-      await linkWithCredential(auth.currentUser, credential);
+      currentUser = (await linkWithCredential(auth.currentUser, credential))
+        .user;
     } else {
       // Sign in with Google
-      await signInWithCredential(auth, credential);
+      currentUser = (await signInWithCredential(auth, credential)).user;
     }
 
-    const db = getFirestore();
-    if (auth.currentUser) {
-      const userDocRef = doc(db, "users", auth.currentUser.uid);
-      await setDoc(
-        userDocRef,
-        {
-          name: user.user.name,
-          email: user.user.email,
-          photoURL: user.user.photo,
-          createdAt: serverTimestamp(),
-          followers: [],
-          following: [],
-          followerCount: 0,
-          followingCount: 0,
-          isAnonymous: false,
-        },
-        { merge: true }
-      );
-
-      if (user.user.email && user.user.name) {
-        await sendWelcomeEmail(user.user.email, user.user.name);
-      }
-
-      const data = await fetchEmissionsData();
-      if (!data) {
-        router.replace("/pre-survey");
-      } else {
-        router.replace("/home");
-      }
-    } else {
-      throw new Error("User not authenticated");
+    const userExists = await checkUserExists(currentUser.uid);
+    if (!userExists) {
+      await createUserProfile({
+        uid: currentUser.uid,
+        name: currentUser.displayName,
+        email: currentUser.email,
+        photoURL: currentUser.photoURL,
+        isAnonymous: false,
+      });
     }
+
+    await handleUserRedirection();
   } catch (error: any) {
-    const errorCode = error.code;
-    const errorMessage = error.message;
-    Alert.alert("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
-    console.error(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
+    Alert.alert("Error", `Code: ${error.code}\nMessage: ${error.message}`);
+    console.error(`Error: Code: ${error.code}\nMessage: ${error.message}`);
   }
 };
 
@@ -152,54 +168,28 @@ const onContinueAnonymously = async () => {
 
   try {
     const userCredential = await signInAnonymously(auth);
-    const user = userCredential.user;
-
-    const db = getFirestore();
-    const userDocRef = doc(db, "users", user.uid);
-    await setDoc(userDocRef, {
-      createdAt: serverTimestamp(),
+    await createUserProfile({
+      uid: userCredential.user.uid,
       isAnonymous: true,
     });
 
-    // Fetch emissions data after creating the user document
-    const data = await fetchEmissionsData();
-    if (!data) {
-      // If no data for the current month, redirect to the carbon calculator
-      router.replace("/pre-survey");
-    } else {
-      // If data exists for the current month, redirect to home
-      router.replace("/signup");
-    }
+    await handleUserRedirection();
   } catch (error: any) {
-    const errorCode = error.code;
-    const errorMessage = error.message;
-    Alert.alert("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
-    console.error(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
+    Alert.alert("Error", `Code: ${error.code}\nMessage: ${error.message}`);
+    console.error(`Error: Code: ${error.code}\nMessage: ${error.message}`);
   }
 };
 
 /* Function to sign up the user with the email and password */
-const onLogin = (email: string, password: string) => {
+const onLogin = async (email: string, password: string) => {
   const auth = getAuth();
-  signInWithEmailAndPassword(auth, email, password)
-    .then((userCredential) => {
-      const user = userCredential.user;
-      if (user) {
-        fetchEmissionsData().then((data) => {
-          if (data) {
-            router.replace("/home");
-          } else {
-            router.replace("/pre-survey");
-          }
-        });
-      }
-    })
-    .catch((error) => {
-      const errorCode = error.code;
-      const errorMessage = error.message;
-      Alert.alert("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
-      console.error(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
-    });
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    await handleUserRedirection();
+  } catch (error: any) {
+    Alert.alert("Error", `Code: ${error.code}\nMessage: ${error.message}`);
+    console.error(`Error: Code: ${error.code}\nMessage: ${error.message}`);
+  }
 };
 
 const onGoogleLogin = async () => {
@@ -211,64 +201,71 @@ const onGoogleLogin = async () => {
     const credential = GoogleAuthProvider.credential(user.idToken);
     const userCredential = await signInWithCredential(auth, credential);
 
-    const currentUser = userCredential.user;
-    if (currentUser) {
-      fetchEmissionsData()
-        .then((data) => {
-          if (data) {
-            router.replace("/home");
-          } else {
-            router.replace("/pre-survey");
-          }
-        })
-        .catch((error) => {
-          const errorCode = error.code;
-          const errorMessage = error.message;
-          Alert.alert("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
-          console.error(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
-        });
+    const userExists = await checkUserExists(userCredential.user.uid);
+    if (!userExists) {
+      await createUserProfile({
+        uid: userCredential.user.uid,
+        name: userCredential.user.displayName,
+        email: userCredential.user.email,
+        photoURL: userCredential.user.photoURL,
+        isAnonymous: false,
+      });
     }
+    await handleUserRedirection();
   } catch (error: any) {
-    const errorCode = error.code;
-    const errorMessage = error.message;
-    Alert.alert("Error", `Code: ${errorCode}\nMessage: ${errorMessage}`);
-    console.error(`Error: Code: ${errorCode}\nMessage: ${errorMessage}`);
+    Alert.alert("Error", `Code: ${error.code}\nMessage: ${error.message}`);
+    console.error(`Error: Code: ${error.code}\nMessage: ${error.message}`);
   }
 };
 
-const logout = () => {
+const logout = async () => {
   const auth = getAuth();
-  signOut(auth)
-    .then(() => {
-      router.dismissAll();
-    })
-    .catch((error) => {
-      Alert.alert("Error", "Failed to logout. Please try again.");
-      console.error("Error: Failed to logout. Please try again.");
-    });
+  try {
+    await signOut(auth);
+    router.dismissAll();
+  } catch (error: any) {
+    Alert.alert("Error", "Failed to logout. Please try again.");
+    console.error("Error: Failed to logout. Please try again.", error);
+  }
 };
 
-const handleResetPassword = (email: string) => {
+const handleResetPassword = async (email: string) => {
   const auth = getAuth();
   if (email.trim() === "") {
     Alert.alert("Error", "Please enter your email address.");
     return;
   }
 
-  sendPasswordResetEmail(auth, email)
-    .then(() => {
-      // todo: replace this with an actual helper message for web
-      Alert.alert(
-        "Success",
-        "Password reset email sent. Please check your inbox.",
-        [{ text: "OK", onPress: () => router.push("/login") }]
-      );
-    })
-    .catch((error) => {
-      const errorMessage = error.message;
-      Alert.alert("Error", `Failed to send reset email: ${errorMessage}`);
-      console.error(`Error: Failed to send reset email: ${errorMessage}`);
-    });
+  try {
+    await sendPasswordResetEmail(auth, email);
+    Alert.alert(
+      "Success",
+      "Password reset email sent. Please check your inbox.",
+      [{ text: "OK", onPress: () => router.push("/login") }]
+    );
+  } catch (error: any) {
+    Alert.alert("Error", `Failed to send reset email: ${error.message}`);
+    console.error(`Error: Failed to send reset email: ${error.message}`);
+  }
+};
+
+const deleteUserAccount = async () => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+
+  if (!user) {
+    throw new Error("No user is currently signed in.");
+  }
+
+  try {
+    // Delete the user's authentication account
+    await deleteUser(user);
+
+    console.log("User account deleted successfully");
+  } catch (error: any) {
+    console.error("Error deleting user account:", error);
+    throw error;
+  }
 };
 
 export {
@@ -279,4 +276,5 @@ export {
   onGoogleLogin,
   logout,
   handleResetPassword,
+  deleteUserAccount,
 };
