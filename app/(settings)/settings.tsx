@@ -5,15 +5,17 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  Modal,
+  TextInput,
   Alert,
 } from "react-native";
 import Icon from "react-native-vector-icons/Feather";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth";
-import { router, useRouter } from "expo-router";
+import { Href, router, useRouter } from "expo-router";
 import { fetchEmissionsData } from "@/api/emissions";
 import { Image } from "expo-image";
 import { BackButton, PageHeader } from "@/components/common";
-import { logout } from "@/api/auth";
+import { logout, deleteUserAccount } from "@/api/auth";
 import { useStripe } from "@/utils/stripe";
 
 const blurhash =
@@ -21,7 +23,7 @@ const blurhash =
 
 interface SettingsItemProps {
   title: string;
-  screen: string;
+  screen: Href<string>;
 }
 
 const SettingsItem: React.FC<SettingsItemProps> = ({ title, screen }) => (
@@ -41,6 +43,8 @@ export default function ProfileScreen() {
   const [totalEmissions, setTotalEmissions] = useState<number>(0);
   const profileIcon = auth.currentUser?.photoURL;
   const { resetPaymentSheetCustomer } = useStripe();
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -75,12 +79,41 @@ export default function ProfileScreen() {
       {
         text: "Logout",
         onPress: async () => {
-          await resetPaymentSheetCustomer();
-          await logout();
+          try {
+            await resetPaymentSheetCustomer();
+            await logout();
+          } catch (error) {
+            console.error(error);
+          } finally {
+            router.replace("/get-started");
+          }
         },
       },
     ]);
-    router.replace("/login");
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmation !== "DELETE") {
+      Alert.alert("Error", "Please type DELETE to confirm account deletion.");
+      return;
+    }
+
+    try {
+      setIsDeleteModalVisible(false); // Close the modal before proceeding
+      await deleteUserAccount();
+
+      // Use setTimeout to delay the navigation slightly, ensuring the modal is fully closed
+      setTimeout(() => {
+        router.replace("/get-started");
+      }, 100);
+    } catch (error: any) {
+      // Delay the error alert to ensure the delete modal is closed
+      setTimeout(() => {
+        Alert.alert("Error", error.message);
+      }, 100);
+    } finally {
+      setDeleteConfirmation(""); // Reset the confirmation text
+    }
   };
 
   return (
@@ -138,16 +171,14 @@ export default function ProfileScreen() {
           </Text>
           <View style={styles.subscriptionButtons}>
             <TouchableOpacity
-              onPress={() =>
-                router.push("/(subscriptions)/subscriptions-settings")
-              }
+              onPress={() => router.push("/subscriptions-settings")}
               style={styles.subscriptionButton}
             >
               <Text style={styles.subscriptionEmoji}>⚙️</Text>
               <Text style={styles.subscriptionButtonText}>Settings</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => router.push("/(subscriptions)/subscriptions")}
+              onPress={() => router.push("/subscriptions")}
               style={styles.subscriptionButton}
             >
               <Text style={styles.subscriptionEmoji}>🛒</Text>
@@ -162,9 +193,56 @@ export default function ProfileScreen() {
           <Text style={styles.logoutButtonText}>Logout</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.deleteAccountButton}>
+        <TouchableOpacity
+          style={styles.deleteAccountButton}
+          onPress={() => setIsDeleteModalVisible(true)}
+        >
           <Text style={styles.deleteAccountButtonText}>Delete Account</Text>
         </TouchableOpacity>
+
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={isDeleteModalVisible}
+          onRequestClose={() => setIsDeleteModalVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Delete Account</Text>
+              <Text style={styles.modalText}>
+                Are you sure you want to delete your account? This action cannot
+                be undone.
+              </Text>
+              <Text style={styles.modalText}>
+                To confirm, please type DELETE in all caps:
+              </Text>
+              <TextInput
+                style={styles.deleteConfirmationInput}
+                placeholder="Type DELETE here"
+                value={deleteConfirmation}
+                onChangeText={setDeleteConfirmation}
+                autoCapitalize="characters"
+              />
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.cancelButton]}
+                  onPress={() => {
+                    setIsDeleteModalVisible(false);
+                    setDeleteConfirmation("");
+                  }}
+                >
+                  <Text style={styles.modalButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.deleteButton]}
+                  onPress={handleDeleteAccount}
+                >
+                  <Text style={styles.modalButtonText}>Delete Account</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </View>
     </ScrollView>
   );
@@ -312,5 +390,66 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: 20,
     color: "white",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 35,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    width: "80%",
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 15,
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: "center",
+  },
+  deleteConfirmationInput: {
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 15,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  modalButton: {
+    borderRadius: 20,
+    padding: 10,
+    elevation: 2,
+    width: "45%",
+  },
+  cancelButton: {
+    backgroundColor: "#2196F3",
+  },
+  deleteButton: {
+    backgroundColor: "#FF0000",
+  },
+  modalButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center",
+    marginVertical: "auto",
   },
 });

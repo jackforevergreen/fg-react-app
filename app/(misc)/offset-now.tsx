@@ -7,23 +7,17 @@ import {
   StyleSheet,
 } from "react-native";
 import { router } from "expo-router";
-import { BackButton } from "@/components/common";
+import { BackButton, PageHeader } from "@/components/common";
 
 export default function OffsetNowScreen() {
   return (
     <ScrollView style={styles.container}>
+      <PageHeader
+        subtitle="Offset your Emissions!"
+        description="Reduce your climate impact in a few clicks"
+      />
+      <BackButton />
       <View style={styles.content}>
-        <BackButton />
-        <View style={styles.header}>
-          <Text style={styles.title}>
-            Forever<Text style={styles.greenText}>green</Text>
-          </Text>
-          <Text style={styles.subtitle}>Offset you Emissions!</Text>
-          <Text style={styles.description}>
-            Reduce your climate impact in a few clicks
-          </Text>
-        </View>
-
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Reforestation</Text>
           <Text style={styles.sectionText}>
@@ -55,7 +49,10 @@ export default function OffsetNowScreen() {
             the planet and support awesome climate projects!
           </Text>
           <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.button}>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => router.navigate("/carbon-credit")}
+            >
               <Text style={styles.buttonText}>Buy a credit</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.button}>
@@ -91,27 +88,6 @@ const styles = StyleSheet.create({
   content: {
     padding: 24,
   },
-  header: {
-    alignItems: "center",
-    marginTop: 32,
-  },
-  title: {
-    fontSize: 48,
-    fontWeight: "bold",
-  },
-  greenText: {
-    color: "#409858",
-  },
-  subtitle: {
-    fontSize: 30,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 12,
-  },
-  description: {
-    fontSize: 18,
-    textAlign: "center",
-  },
   section: {
     backgroundColor: "#EEEEEE",
     borderRadius: 12,
@@ -131,6 +107,8 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: 16,
   },
   centeredButtonContainer: {
     flexDirection: "row",

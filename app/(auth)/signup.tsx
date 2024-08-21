@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   useWindowDimensions,
   StyleSheet,
-  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TextInput } from "react-native-paper";
@@ -25,7 +24,7 @@ export default function SignupScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [isAnonymous, setIsAnonymous] = useState(false);
 
-  const { height, width } = useWindowDimensions();
+  const { height } = useWindowDimensions();
 
   useEffect(() => {
     GoogleSignin.configure({
@@ -43,15 +42,9 @@ export default function SignupScreen() {
     return () => unsubscribe();
   }, []);
 
-  const screenHeight = useWindowDimensions().height;
-
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
-    >
-      <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView style={styles.safeArea}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollViewContent}
@@ -195,8 +188,8 @@ export default function SignupScreen() {
             </View>
           </View>
         </ScrollView>
-      </SafeAreaView>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
