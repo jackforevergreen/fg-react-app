@@ -4,34 +4,13 @@ import * as SplashScreen from "expo-splash-screen";
 import { useCallback, useEffect } from "react";
 import "react-native-reanimated";
 import { PaperProvider } from "react-native-paper";
-import { Alert, Linking, PermissionsAndroid, Platform } from "react-native";
-import messaging from "@react-native-firebase/messaging";
+import { Linking, Platform } from "react-native";
 import { StripeProvider, useStripe } from "@/utils/stripe";
 import { initializeFirebase } from "@/utils/firebaseConfig";
+import { Notifications } from "../api/notifications"; // Import the new module
 
 export default function RootLayout() {
   initializeFirebase();
-
-  async function requestUserPermission(): Promise<boolean> {
-    const authStatus = await messaging().requestPermission();
-    const enabled =
-      authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-      authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-    if (enabled) {
-      console.log("Authorization status:", authStatus);
-    }
-    return enabled;
-  }
-
-  const setupMessaging = async () => {
-    const permissionGranted = await requestUserPermission();
-    if (permissionGranted) {
-      const token = await messaging().getToken();
-      console.log("Token:" + token);
-    } else {
-      console.log("Permission not granted");
-    }
-  };
 
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
@@ -42,49 +21,13 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
 
-    if (Platform.OS === "android") {
-      PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
-      );
-    } else if (Platform.OS === "ios") {
-      setupMessaging();
-
-      // Check whether an initial notification is available
-      messaging()
-        .getInitialNotification()
-        .then(async (remoteMessage) => {
-          if (remoteMessage) {
-            console.log(
-              "Notification caused app to open from quit state:",
-              remoteMessage.notification
-            );
-          }
-        });
-
-      // Assume a message-notification contains a "type" property in the data payload of the screen to open
-      messaging().onNotificationOpenedApp((remoteMessage) => {
-        console.log(
-          "Notification caused app to open from background state:",
-          remoteMessage.notification
-        );
-      });
-
-      // Register background handler
-      messaging().setBackgroundMessageHandler(async (remoteMessage) => {
-        console.log("Message handled in the background!", remoteMessage);
-      });
-
-      const unsubscribe = messaging().onMessage(async (remoteMessage) => {
-        if (remoteMessage.notification) {
-          Alert.alert(
-            remoteMessage.notification.title || "New Notification",
-            remoteMessage.notification.body || "You have a new notification"
-          );
-        }
-      });
-
-      return unsubscribe;
+    if (Platform.OS === "android" || Platform.OS === "ios") {
+      Notifications.setupMessaging();
     }
+
+    const unsubscribe = Notifications.initializeNotifications();
+
+    return unsubscribe;
   }, [loaded]);
 
   const { handleURLCallback } = useStripe();
@@ -137,7 +80,6 @@ export default function RootLayout() {
       >
         <Stack
           screenOptions={{
-            // Hide the header for all other routes.
             headerShown: false,
           }}
         >
