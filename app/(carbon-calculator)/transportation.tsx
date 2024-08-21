@@ -16,6 +16,8 @@ import {
   NextButton,
 } from "@/components/carbon-calculator";
 import { useEmissions } from "@/contexts";
+import { calculateEmissions } from "@/api/emissions"; // Adjust import path as necessary
+
 
 export default function TransportationCalculator() {
   // Context for data
@@ -59,34 +61,8 @@ export default function TransportationCalculator() {
   );
 
   useEffect(() => {
-    const calculateEmissions = () => {
-      const flightEmissions = longFlights * 1.35 + shortFlights * 0.9;
-
-      const carEmissionRates: { [key: string]: number } = {
-        Gas: 300,
-        Hybrid: 250,
-        Electric: 200,
-      };
-
-      const carEmissions =
-        carType && milesPerWeek && carType in carEmissionRates
-          ? (carEmissionRates[carType] * parseFloat(milesPerWeek) * 52) /
-            1000000
-          : 0;
-
-      const publicTransportEmissions =
-        parseFloat(trainFrequency) * 0.002912 * 52 +
-        parseFloat(busFrequency) * 0.005824 * 52;
-
-      const transportationEmissions =
-        flightEmissions + carEmissions + publicTransportEmissions;
-
-      setFlightEmissions(flightEmissions);
-      setCarEmissions(carEmissions);
-      setPublicTransportEmissions(publicTransportEmissions);
-      setTransportationEmissions(transportationEmissions);
-
-      updateTransportationData({
+    const emissionsData = {
+      transportationData: {
         longFlights,
         shortFlights,
         carType,
@@ -101,14 +77,27 @@ export default function TransportationCalculator() {
         carEmissions,
         publicTransportEmissions,
         transportationEmissions,
-      });
-
-      updateTotalData({
-        transportationEmissions,
-      });
+      },
+      dietData: {}, // Placeholder if needed
+      energyData: {}, // Placeholder if needed
+      totalData: {
+        transportationEmissions: 0, // Will be updated by calculateEmissions
+        dietEmissions: 0,
+        energyEmissions: 0,
+        totalEmissions: 0,
+      },
     };
-    calculateEmissions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    const updatedTotalData = calculateEmissions(emissionsData);
+
+    // Update the flight emissions specifically after the calculation
+    setFlightEmissions(emissionsData.transportationData.flightEmissions || 0);
+    setCarEmissions(emissionsData.transportationData.carEmissions || 0);
+    setPublicTransportEmissions(emissionsData.transportationData.publicTransportEmissions || 0);
+    setTransportationEmissions(updatedTotalData.transportationEmissions);
+
+    updateTransportationData(emissionsData.transportationData);
+    updateTotalData(updatedTotalData);
   }, [
     longFlights,
     shortFlights,
@@ -278,7 +267,6 @@ export default function TransportationCalculator() {
               }}
               label="time(s)"
             />
-
             <TransportQuestion
               question="Do you use the bus?"
               useTransport={useBus}
@@ -298,9 +286,8 @@ export default function TransportationCalculator() {
                   markQuestionCompleted("busFrequency");
                 }
               }}
-              label="time(s) per week"
+              label="time(s)"
             />
-
             <TransportQuestion
               question="Do you walk/bike as a method of transportation?"
               useTransport={walkBike}
@@ -320,7 +307,7 @@ export default function TransportationCalculator() {
                   markQuestionCompleted("walkBikeFrequency");
                 }
               }}
-              label="time(s) per week"
+              label="time(s)"
             />
 
             <View style={styles.totalSection}>

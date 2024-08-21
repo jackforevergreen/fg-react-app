@@ -12,7 +12,10 @@ import dayjs from "dayjs";
 interface EmissionsData {
   energyData?: any;
   transportationData?: any;
-  dietData?: any;
+  dietData?: {
+    diet: string;
+    dietEmissions: number;
+  };
   totalData: {
     transportationEmissions: number;
     dietEmissions: number;
@@ -85,8 +88,92 @@ const fetchEmissionsData = async (month?: string, userId?: string) => {
 
 const calculateEmissions = (data: EmissionsData) => {
   const { energyData, transportationData, dietData, totalData } = data;
+  // Transportation Caclculation
+  let transportationEmissions = 0.0;
+  if (transportationData) {
+    const { longFlights, shortFlights, carType, milesPerWeek, trainFrequency, busFrequency } = transportationData;
 
-  // todo: calculate emissions for each category
+    const flightEmissions = (longFlights || 0) * 1.35 + (shortFlights || 0) * 0.9;
+
+    const carEmissionRates: { [key: string]: number } = {
+      Gas: 300,
+      Hybrid: 250,
+      Electric: 200,
+    };
+
+    const carEmissions =
+      carType && milesPerWeek && carType in carEmissionRates
+        ? (carEmissionRates[carType] * parseFloat(milesPerWeek) * 52) / 1000000
+        : 0;
+
+    const publicTransportEmissions =
+      parseFloat(trainFrequency || "0") * 0.002912 * 52 +
+      parseFloat(busFrequency || "0") * 0.005824 * 52;
+
+      transportationEmissions = flightEmissions + carEmissions + publicTransportEmissions;
+
+      // Set the calculated emissions back into transportationData
+      transportationData.flightEmissions = flightEmissions;
+      transportationData.carEmissions = carEmissions;
+      transportationData.publicTransportEmissions = publicTransportEmissions;
+      transportationData.transportationEmissions = transportationEmissions;
+  }
+  // Diet Calculation
+  let dietEmissions = 0.0;
+
+  if (dietData?.diet) {
+    switch (dietData.diet) {
+      case "Meat Lover":
+        dietEmissions = 3.3;
+        break;
+      case "Average":
+        dietEmissions = 2.5;
+        break;
+      case "No Beef Or Lamb":
+        dietEmissions = 1.9;
+        break;
+      case "Veterinarian":
+        dietEmissions = 1.7;
+        break;
+      case "Vegan":
+        dietEmissions = 1.5;
+        break;
+      default:
+        dietEmissions = 0.0;
+    }
+  }
+  totalData.transportationEmissions = transportationEmissions;
+
+  totalData.dietEmissions = dietEmissions;
+  
+  // Energy Calculation
+  let energyEmissions = 0.0;
+  if (energyData && energyData.state && energyData.electricBill && energyData.waterBill && energyData.propaneBill && energyData.gasBill && energyData.peopleInHome) {
+    const stateData = statesData.find((s) => s.name === energyData.state);
+
+    if (stateData) {
+      const electricityEmissions = (stateData.stateEGridValue / 2000) * (parseFloat(energyData.electricBill) / stateData.averageMonthlyElectricityBill);
+      const waterEmissions = (parseFloat(energyData.waterBill) / stateData.averageMonthlyWaterBill) * 0.0052;
+      const propaneEmissions = (parseFloat(energyData.propaneBill) / stateData.averageMonthlyPropaneBill) * 0.24;
+      const gasEmissions = (parseFloat(energyData.gasBill) / stateData.averageMonthlyGasBill) * 2.12;
+
+      energyEmissions = (electricityEmissions + waterEmissions + propaneEmissions + gasEmissions) / energyData.peopleInHome;
+
+      // Update energyData with calculated emissions
+      energyData.electricEmissions = electricityEmissions;
+      energyData.waterEmissions = waterEmissions;
+      energyData.otherEnergyEmissions = propaneEmissions + gasEmissions;
+      energyData.energyEmissions = energyEmissions;
+    }
+  }
+
+
+  totalData.totalEmissions =
+    totalData.transportationEmissions +
+    totalData.dietEmissions +
+    totalData.energyEmissions;
+
+  return totalData;
 };
 
-export { saveEmissionsData, fetchEmissionsData };
+export { saveEmissionsData, fetchEmissionsData, calculateEmissions };

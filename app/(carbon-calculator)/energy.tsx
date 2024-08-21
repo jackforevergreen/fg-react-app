@@ -107,25 +107,21 @@ export default function EnergyCalculator() {
     ) {
       // Calculate electricity emissions
       const electricityEmissions =
-        ((stateData as any).stateEGridValue / 2000) *
-        (parseFloat(electricBill) /
-          (stateData as any).averageMonthlyElectricityBill);
-
+        (stateData.stateEGridValue / 2000) *
+        (parseFloat(electricBill) / stateData.averageMonthlyElectricityBill);
+  
       // Calculate water emissions
       const waterEmissions =
-        (parseFloat(waterBill) / (stateData as any).averageMonthlyWaterBill) *
-        0.0052;
-
+        (parseFloat(waterBill) / stateData.averageMonthlyWaterBill) * 0.0052;
+  
       // Calculate propane emissions
       const propaneEmissions =
-        (parseFloat(propaneBill) /
-          (stateData as any).averageMonthlyPropaneBill) *
-        0.24;
-
+        (parseFloat(propaneBill) / stateData.averageMonthlyPropaneBill) * 0.24;
+  
       // Calculate natural gas emissions
       const gasEmissions =
-        (parseFloat(gasBill) / (stateData as any).averageMonthlyGasBill) * 2.12;
-
+        (parseFloat(gasBill) / stateData.averageMonthlyGasBill) * 2.12;
+  
       // Calculate total energy emissions
       const totalEnergyEmissions =
         (electricityEmissions +
@@ -133,7 +129,7 @@ export default function EnergyCalculator() {
           propaneEmissions +
           gasEmissions) /
         peopleInHome;
-
+  
       // Update state with new emission values
       setElectricEmissions(electricityEmissions);
       setWaterEmissions(waterEmissions);
@@ -142,7 +138,7 @@ export default function EnergyCalculator() {
       setTotalEmissions(
         totalEnergyEmissions + transportationEmissions + dietEmissions
       );
-
+  
       updateEnergyData({
         state,
         electricBill,
@@ -151,17 +147,17 @@ export default function EnergyCalculator() {
         gasBill,
         useWoodStove,
         peopleInHome,
-        electricEmissions,
-        waterEmissions,
-        otherEnergyEmissions,
-        energyEmissions,
+        electricEmissions: electricityEmissions,
+        waterEmissions: waterEmissions,
+        otherEnergyEmissions: propaneEmissions + gasEmissions,
+        energyEmissions: totalEnergyEmissions,
       });
-
+  
       updateTotalData({
         transportationEmissions,
         dietEmissions,
-        energyEmissions,
-        totalEmissions,
+        energyEmissions: totalEnergyEmissions,
+        totalEmissions: totalEnergyEmissions + transportationEmissions + dietEmissions,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
