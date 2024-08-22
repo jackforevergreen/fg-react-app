@@ -7,6 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  Button,
 } from "react-native";
 import { router } from "expo-router";
 import { fetchEmissionsData } from "@/api/emissions";
@@ -17,6 +18,8 @@ import {
   EarthBreakdown,
   LineChartBreakdown,
 } from "@/components/breakdown";
+import { getRandomFact } from "@/constants/facts";
+
 
 const TextButton = ({ label, style }: { label: string; style: object }) => (
   <View style={[styles.textButton, style]}>
@@ -30,6 +33,10 @@ const HomeScreen = () => {
   const [transportationEmissions, setTransportationEmissions] = useState(0.0);
   const [dietEmissions, setDietEmissions] = useState(0.0);
   const [energyEmissions, setEnergyEmissions] = useState(0.0);
+  const [fact, setFact] = useState<string>(getRandomFact());
+  const handleNewFact = () => {
+    setFact(getRandomFact());
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -69,10 +76,8 @@ const HomeScreen = () => {
           <Text style={styles.fastFactTitle}>
             Forevergreen Fast Fact of the Day
           </Text>
-          <Text style={styles.fastFactText}>
-            Turning off the tap while brushing your teeth can save up to 8
-            gallons of water a day, over 2900 gallons of water a year!
-          </Text>
+          <Text style={styles.fastFactText}>{fact}</Text>
+          <Button title="See New Fact" onPress={handleNewFact} />
         </View>
 
         {/* Carbon Footprint and Calculator */}
