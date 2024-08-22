@@ -23,17 +23,14 @@ export default function RootLayout() {
     }
 
     GoogleSignin.configure({
-      webClientId:
-        "489135632905-iu340mh7lub0iis2q18upvus42fa2roo.apps.googleusercontent.com",
+      webClientId: "489135632905-iu340mh7lub0iis2q18upvus42fa2roo.apps.googleusercontent.com",
     });
 
     if (Platform.OS === "android" || Platform.OS === "ios") {
       Notifications.setupMessaging();
+      const unsubscribe = Notifications.initializeNotifications();
+      return unsubscribe;
     }
-
-    const unsubscribe = Notifications.initializeNotifications();
-
-    return unsubscribe;
   }, [loaded]);
 
   const { handleURLCallback } = useStripe();
@@ -62,12 +59,9 @@ export default function RootLayout() {
 
     getUrlAsync();
 
-    const deepLinkListener = Linking.addEventListener(
-      "url",
-      (event: { url: string }) => {
-        handleDeepLink(event.url);
-      }
-    );
+    const deepLinkListener = Linking.addEventListener("url", (event: { url: string }) => {
+      handleDeepLink(event.url);
+    });
 
     return () => {
       deepLinkListener.remove();
