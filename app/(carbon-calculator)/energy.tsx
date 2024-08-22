@@ -218,8 +218,11 @@ export default function EnergyCalculator() {
       <SafeAreaView>
         <View style={styles.contentContainer}>
           <Header progress={progress} title="Energy" />
+          <Text>
+              The last section are your energy emissions! These are all your utilties and energy usage at home.
+            </Text>
 
-          <Text style={styles.stateSelectionText}>Which State do you live in?</Text>
+          <Text style={styles.stateSelectionText}>Which State do you live in? 🏠</Text>
           <Menu
             visible={menuVisible}
             onDismiss={() => setMenuVisible(false)}
@@ -241,7 +244,7 @@ export default function EnergyCalculator() {
           </Menu>
 
           <NumberInput
-            question="How much was your electric bill last month?"
+            question="How much was your electric bill last month? ⚡"
             value={electricBill}
             onChange={(value: string) => {
               validateNumber(value, setElectricBill, setElectricBillError);
@@ -256,7 +259,7 @@ export default function EnergyCalculator() {
           />
 
           <NumberInput
-            question="How much was your water bill last month?"
+            question="How much was your water bill last month? 🚰"
             value={waterBill}
             onChange={(value: string) => {
               validateNumber(value, setWaterBill, setWaterBillError);
@@ -271,7 +274,7 @@ export default function EnergyCalculator() {
           />
 
           <NumberInput
-            question="How much was spent on propane last month?"
+            question="How much was spent on propane last month? 🛢"
             value={propaneBill}
             onChange={(value: string) => {
               validateNumber(value, setPropaneBill, setPropaneBillError);
@@ -286,7 +289,7 @@ export default function EnergyCalculator() {
           />
 
           <NumberInput
-            question="How much was spent on gas last month?"
+            question="How much was spent on natural gas last month? ⛽"
             value={gasBill}
             onChange={(value: string) => {
               validateNumber(value, setGasBill, setGasBillError);
@@ -301,7 +304,7 @@ export default function EnergyCalculator() {
           />
 
           <RadioButtonGroup
-            question="Do you use a wood stove?"
+            question="Do you use a wood stove? 🪵"
             options={["Yes", "No"]}
             value={useWoodStove}
             onChange={(value: string) => {

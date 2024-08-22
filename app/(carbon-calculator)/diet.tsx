@@ -55,11 +55,18 @@ export default function DietCalculator() {
         <View style={styles.contentContainer}>
           {/* Header */}
           <Header progress={progress} title="Diet" />
+          <Text>
+              Next up is your dietary emissions! These are all the emissions related to what you eat.
+            </Text>
 
           {/* Diet Selection */}
           <RadioButtonGroup
             question="Select your Diet"
-            options={["Meat Lover", "Average", "No Beef Or Lamb", "Veterinarian", "Vegan"]}
+            options={["Meat Lover 🍖 ", 
+                      "Average 🍗 ", 
+                      "No Beef Or Lamb 🐟🥗 ", 
+                      "Vegetarian 🥕🥦 ", 
+                      "Vegan 🌱🥑 "]}
             value={diet}
             onChange={(selectedDiet: string) => {
               setDiet(selectedDiet);
@@ -69,19 +76,21 @@ export default function DietCalculator() {
 
           {/* Emissions Display */}
           <View style={styles.emissionsContainer}>
-            <Text style={styles.emissionsTitle}>Your Estimated Individual Diet Emissions</Text>
-            <View style={styles.emissionRow}>
-              <Text style={styles.emissionLabel}>Transportation Emissions</Text>
-              <Text style={styles.emissionValue}>{transportationEmissions.toFixed(2)}</Text>
-            </View>
-            <View style={styles.emissionRow}>
-              <Text style={styles.emissionLabel}>Diet Emissions</Text>
-              <Text style={styles.emissionValue}>{dietEmissions.toFixed(2)}</Text>
-            </View>
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.totalValue}>{(transportationEmissions + dietEmissions).toFixed(2)}</Text>
-              <Text style={styles.totalUnit}>tons of CO2 per year</Text>
+            <Text style={styles.emissionsTitle}>Your Individual Diet Emissions</Text>
+            <View style={styles.emissionsContent}>
+              <View style={styles.emissionRow}>
+                <Text>Transportation Emissions:</Text>
+                <Text>{transportationEmissions.toFixed(2)}</Text>
+              </View>
+              <View style={styles.emissionRow}>
+                <Text>Diet Emissions:</Text>
+                <Text>{dietEmissions.toFixed(2)}</Text>
+              </View>
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>Total:</Text>
+                <Text>{(transportationEmissions + dietEmissions).toFixed(2)}</Text>
+                <Text>tons CO2 per year</Text>
+              </View>
             </View>
           </View>
         </View>
@@ -109,9 +118,22 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
   },
+  emissionsContent: {
+    marginTop: 16,
+    rowGap: 16,
+  },
   emissionRow: {
     flexDirection: "row",
-    marginTop: 16,
+    justifyContent: "space-between",
+  },
+  totalRow: {
+    marginTop: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginRight: 40,
+  },
+  totalLabel: {
+    fontWeight: "bold",
   },
   emissionLabel: {
     fontSize: 18,
@@ -119,15 +141,6 @@ const styles = StyleSheet.create({
   },
   emissionValue: {
     fontSize: 18,
-  },
-  totalRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 16,
-  },
-  totalLabel: {
-    fontSize: 18,
-    fontWeight: "bold",
   },
   totalValue: {
     fontSize: 18,

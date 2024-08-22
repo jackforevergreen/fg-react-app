@@ -3,12 +3,12 @@ import { View, Text, ScrollView, KeyboardAvoidingView, StyleSheet, Platform } fr
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Header,
-  QuestionSlider,
   RadioButtonGroup,
   NumberInput,
   TransportQuestion,
   NextButton,
 } from "@/components/carbon-calculator";
+import QuestionSliderColor from '@/components/carbon-calculator/QuestionSliderColor';
 import { useEmissions } from "@/contexts";
 import { calculateEmissions } from "@/api/emissions"; // Adjust import path as necessary
 
@@ -160,8 +160,11 @@ export default function TransportationCalculator() {
         <SafeAreaView>
           <View style={styles.contentContainer}>
             <Header progress={progress} title="Transportation" />
+            <Text>
+              First you will calculate your transportation emissions! These are all the related emissions for how you choose to get around.
+            </Text>
 
-            <QuestionSlider
+            <QuestionSliderColor
               question="In the last year, how many long round-trip flights have you been on? (more than 10 hours round trip) ✈️"
               value={longFlights}
               onChange={(value: number) => {
@@ -172,8 +175,8 @@ export default function TransportationCalculator() {
               minimumValue={0}
               maximumValue={7}
             />
-
-            <QuestionSlider
+            
+            <QuestionSliderColor
               question="In the last year, how many short round-trip flights have you been on? (less than 10 hours round trip) ✈️"
               value={shortFlights}
               onChange={(value: number) => {
@@ -187,7 +190,7 @@ export default function TransportationCalculator() {
 
             <RadioButtonGroup
               question="What type of car do you drive? 🚗"
-              options={["Gas", "Hybrid", "Electric"]}
+              options={["Gas - ⛽️", "Hybrid - ⛽️&⚡", "Electric - ⚡"]}
               value={carType}
               onChange={(value: string) => {
                 setCarType(value);
@@ -197,7 +200,7 @@ export default function TransportationCalculator() {
             />
 
             <NumberInput
-              question="How many miles do you drive per week? 🚗"
+              question="How many miles do you drive per week? 🛞"
               value={milesPerWeek}
               onChange={(value: string) => {
                 validateNumber(value, setMilesPerWeek, setMilesError, "miles");
@@ -211,7 +214,7 @@ export default function TransportationCalculator() {
             />
 
             <TransportQuestion
-              question="Do you use the train/metro?"
+              question="Do you use the train/metro? 🚉"
               useTransport={useTrain}
               setUseTransport={setUseTrain}
               frequency={trainFrequency}
@@ -227,7 +230,7 @@ export default function TransportationCalculator() {
               label="time(s)"
             />
             <TransportQuestion
-              question="Do you use the bus?"
+              question="Do you use the bus? 🚌"
               useTransport={useBus}
               setUseTransport={setUseBus}
               frequency={busFrequency}
@@ -243,7 +246,7 @@ export default function TransportationCalculator() {
               label="time(s)"
             />
             <TransportQuestion
-              question="Do you walk/bike as a method of transportation?"
+              question="Do you walk/bike as a method of transportation? 🚲"
               useTransport={walkBike}
               setUseTransport={setWalkBike}
               frequency={walkBikeFrequency}
@@ -258,20 +261,29 @@ export default function TransportationCalculator() {
               }}
               label="time(s)"
             />
-
-            <View style={styles.totalSection}>
-              <Text style={styles.totalTitle}>Your Individual Transportation Emissions</Text>
-              <Text style={styles.totalText}>Flight Emissions: {flightEmissions.toFixed(2)}</Text>
-              <Text style={styles.totalText}>Car Emissions: {carEmissions.toFixed(2)}</Text>
-              <Text style={styles.totalText}>Public Transport: {publicTransportEmissions.toFixed(2)}</Text>
+            <View style={styles.emissionsContainer}>
+            <Text style={styles.emissionsTitle}>Your Individual Transportation Emissions</Text>
+            <View style={styles.emissionsContent}>
+              <View style={styles.emissionRow}>
+                <Text>Flight Emissions:</Text>
+                <Text>{flightEmissions.toFixed(2)}</Text>
+              </View>
+              <View style={styles.emissionRow}>
+                <Text>Car Emissions:</Text>
+                <Text>{carEmissions.toFixed(2)}</Text>
+              </View>
+              <View style={styles.emissionRow}>
+                <Text>Public Transport:</Text>
+                <Text>{publicTransportEmissions.toFixed(2)}</Text>
+              </View>
               <View style={styles.totalRow}>
-                <Text style={styles.boldText}>Total:</Text>
-                <Text style={styles.totalText}>{transportationEmissions.toFixed(2)}</Text>
-                <Text style={styles.totalText}>tons of CO2 per year</Text>
+                <Text style={styles.totalLabel}>Total:</Text>
+                <Text>{transportationEmissions.toFixed(2)}</Text>
+                <Text>tons of CO2 per year</Text>
               </View>
             </View>
           </View>
-
+        </View>
           <NextButton isFormValid={isFormValid} onNext="diet" />
         </SafeAreaView>
       </ScrollView>
@@ -310,5 +322,24 @@ const styles = StyleSheet.create({
   boldText: {
     fontWeight: "bold",
     fontSize: 18,
+  },
+  emissionsContainer: {
+    marginTop: 32,
+    marginBottom: 64,
+  },
+  emissionsTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  emissionsContent: {
+    marginTop: 16,
+    rowGap: 16,
+  },
+  emissionRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  totalLabel: {
+    fontWeight: "bold",
   },
 });
