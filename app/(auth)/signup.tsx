@@ -13,7 +13,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { TextInput } from "react-native-paper";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { router } from "expo-router";
-import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { onSignup, onGoogleSignUp, onContinueAnonymously } from "@/api/auth";
 import { TreeLogo } from "@/constants/Images";
 
@@ -27,11 +26,6 @@ export default function SignupScreen() {
   const { height } = useWindowDimensions();
 
   useEffect(() => {
-    GoogleSignin.configure({
-      webClientId:
-        "489135632905-iu340mh7lub0iis2q18upvus42fa2roo.apps.googleusercontent.com",
-    });
-
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {

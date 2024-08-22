@@ -1,4 +1,4 @@
-import { getFirestore, doc, getDoc, setDoc, collection, serverTimestamp } from "firebase/firestore";
+import { getFirestore, doc, getDoc, setDoc, collection, serverTimestamp, Timestamp } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import dayjs from "dayjs";
 import { stateData } from "@/types";
@@ -35,6 +35,9 @@ const saveEmissionsData = async (data: EmissionsData) => {
 
 // Fetch emissions data for a specific month
 const fetchEmissionsData = async (month?: string, userId?: string) => {
+  interface EmissionsDataExtended extends EmissionsData {
+    lastUpdated: Timestamp;
+  }
   const auth = getAuth();
   const db = getFirestore();
 
@@ -51,7 +54,7 @@ const fetchEmissionsData = async (month?: string, userId?: string) => {
 
   try {
     const Doc = await getDoc(DocRef);
-    return Doc.exists() ? (Doc.data() as EmissionsData) : null;
+    return Doc.exists() ? (Doc.data() as EmissionsDataExtended) : null;
   } catch (error) {
     console.error("Error fetching data:", error);
     return null;
