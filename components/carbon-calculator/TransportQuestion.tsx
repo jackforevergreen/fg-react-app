@@ -61,8 +61,10 @@ const TransportQuestion = ({
               keyboardType="numeric"
               mode="outlined"
               outlineStyle={{
-                borderWidth: 0,
+                borderWidth: 1,
+                borderRadius: 10,
               }}
+              outlineColor="#D9D9D9"
               style={styles.textInput}
               dense={true}
               textColor="#000"
@@ -119,11 +121,7 @@ const styles = StyleSheet.create({
     height: 40,
     backgroundColor: "#FFF",
     width: "auto",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 1.41,
-    borderRadius: 8,
+    borderRadius: 10,
     marginTop: 16,
   },
 });

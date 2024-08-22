@@ -97,7 +97,7 @@ const HomeScreen = () => {
             onPress={() => router.push("/pre-survey")}
           >
             <Text style={styles.boxTitle}>Calculate your impact</Text>
-            <Pressable style={styles.calculator}>
+            <View style={styles.calculator}>
               {/* Calculator buttons */}
               <>
                 <View style={styles.calculatorRow}>
@@ -175,7 +175,7 @@ const HomeScreen = () => {
                   />
                 </View>
               </>
-            </Pressable>
+            </View>
           </TouchableOpacity>
         </View>
 

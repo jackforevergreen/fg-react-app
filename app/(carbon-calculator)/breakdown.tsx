@@ -1,24 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  Dimensions,
-  StyleSheet,
-} from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Dimensions, StyleSheet } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { router } from "expo-router";
 // todo: replace fetchEmissionsData with the calculate emissions data function (not written yet)
 import { fetchEmissionsData } from "@/api/emissions";
-import {
-  PieChartBreakdown,
-  BarChartBreakdown,
-  EarthBreakdown,
-} from "@/components/breakdown";
+import { PieChartBreakdown, BarChartBreakdown, EarthBreakdown } from "@/components/breakdown";
 import CalculatingScreen from "@/components/carbon-calculator/Calculating";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import ConfettiCannon from 'react-native-confetti-cannon';
+import ConfettiCannon from "react-native-confetti-cannon";
 
 export default function Breakdown() {
   const [emissionsPerYear, setEmissionsPerYear] = useState(0.0);
@@ -28,9 +17,7 @@ export default function Breakdown() {
   const [energyEmissions, setEnergyEmissions] = useState(0.0);
   const [retryCount, setRetryCount] = useState(0);
   const [showConfetti, setShowConfetti] = useState(true); // Control visibility of confetti
-  const explosionRef = useRef(null);
-
-
+  const explosionRef = useRef<ConfettiCannon>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -71,9 +58,9 @@ export default function Breakdown() {
   useEffect(() => {
     if (showConfetti) {
       const timeout = setTimeout(() => {
-        setShowConfetti(false);  // Hide confetti after 3 seconds
+        setShowConfetti(false); // Hide confetti after 3 seconds
       }, 3000); // Match this duration with your confetti fallSpeed
-  
+
       return () => clearTimeout(timeout); // Cleanup timeout
     }
   }, [showConfetti]);
@@ -88,12 +75,7 @@ export default function Breakdown() {
         <View style={styles.container}>
           {/* Header */}
           <View style={styles.header}>
-            <Icon
-              name="arrow-left"
-              size={24}
-              color="black"
-              onPress={() => router.back()}
-            />
+            <Icon name="arrow-left" size={24} color="black" onPress={() => router.back()} />
             <Text style={styles.headerTitle}>Results</Text>
           </View>
 
@@ -102,13 +84,9 @@ export default function Breakdown() {
             <View style={styles.card}>
               <Text style={styles.cardTitle}>Your Carbon Footprint</Text>
               <Text>Your total emissions are:</Text>
-              <Text style={styles.greenText}>
-                {emissionsPerYear.toFixed(2)} tons co2/year
-              </Text>
+              <Text style={styles.greenText}>{emissionsPerYear.toFixed(2)} tons co2/year</Text>
               <Text>Your total monthly emissions are:</Text>
-              <Text style={styles.greenText}>
-                {emissionsPerMonth.toFixed(2)} tons co2/month
-              </Text>
+              <Text style={styles.greenText}>{emissionsPerMonth.toFixed(2)} tons co2/month</Text>
             </View>
 
             {/* Emission Breakdown */}
@@ -117,11 +95,7 @@ export default function Breakdown() {
               <View style={{ alignItems: "center", marginBottom: 16 }}>
                 <PieChartBreakdown
                   names={["Transportation", "Diet", "Energy"]}
-                  values={[
-                    transportationEmissions,
-                    dietEmissions,
-                    energyEmissions,
-                  ]}
+                  values={[transportationEmissions, dietEmissions, energyEmissions]}
                   colors={["#44945F", "#AEDCA7", "#66A570"]}
                   height={220}
                   width={screenWidth}
@@ -134,12 +108,7 @@ export default function Breakdown() {
                   { name: "Energy", color: "#66A570" },
                 ].map((item, index) => (
                   <View key={index} style={styles.legendItem}>
-                    <View
-                      style={[
-                        styles.legendColor,
-                        { backgroundColor: item.color },
-                      ]}
-                    />
+                    <View style={[styles.legendColor, { backgroundColor: item.color }]} />
                     <Text>{item.name}</Text>
                   </View>
                 ))}
@@ -155,12 +124,7 @@ export default function Breakdown() {
                   { name: "Average American", color: "#A9A9A9" },
                 ].map((item, index) => (
                   <View key={index} style={styles.legendItem}>
-                    <View
-                      style={[
-                        styles.legendColor,
-                        { backgroundColor: item.color },
-                      ]}
-                    />
+                    <View style={[styles.legendColor, { backgroundColor: item.color }]} />
                     <Text>{item.name}</Text>
                   </View>
                 ))}
@@ -184,20 +148,15 @@ export default function Breakdown() {
             <View style={styles.card}>
               <Text style={styles.earthBreakdownTitle}>Earth Breakdown</Text>
               <Text style={styles.earthBreakdownText}>
-                If everyone lived like you we would need{" "}
-                {(emissionsPerYear / 6.4).toFixed(2)} Earths!
+                If everyone lived like you we would need {(emissionsPerYear / 6.4).toFixed(2)} Earths!
               </Text>
               <EarthBreakdown emissions={emissionsPerYear} />
             </View>
 
             {/* Call to Action */}
             <View style={styles.card}>
-              <Text style={styles.ctaTitle}>
-                Help us help you change the World 🌍
-              </Text>
-              <Text style={styles.ctaText}>
-                Support green projects around the world!
-              </Text>
+              <Text style={styles.ctaTitle}>Help us help you change the World 🌍</Text>
+              <Text style={styles.ctaText}>Support green projects around the world!</Text>
 
               <TouchableOpacity
                 onPress={() => {
@@ -212,8 +171,7 @@ export default function Breakdown() {
                 <Text style={styles.ctaButtonText}>Learn More</Text>
               </TouchableOpacity>
               <Text style={styles.ctaText}>
-                Build your legacy and leave a lasting impact by planting your own
-                forest.
+                Build your legacy and leave a lasting impact by planting your own forest.
               </Text>
 
               <TouchableOpacity
@@ -249,20 +207,19 @@ export default function Breakdown() {
         </View>
       </ScrollView>
       {showConfetti && (
-      <View style={styles.confettiContainer}>
-        <ConfettiCannon
-          count={200}
-          origin={{ x: screenWidth / 2, y: 0 }}
-          autoStart={false}
-          ref={explosionRef}
-          fadeOut
-          fallSpeed={2000}
-          explosionSpeed={1}
-        />
-      </View>
-    )}
-    </View> 
-      
+        <View style={styles.confettiContainer}>
+          <ConfettiCannon
+            count={200}
+            origin={{ x: screenWidth / 2, y: 0 }}
+            autoStart={false}
+            ref={explosionRef}
+            fadeOut
+            fallSpeed={2000}
+            explosionSpeed={1}
+          />
+        </View>
+      )}
+    </View>
   );
 }
 
@@ -377,6 +334,6 @@ const styles = StyleSheet.create({
   },
   confettiContainer: {
     ...StyleSheet.absoluteFillObject,
-    zIndex: 1000,  // Ensure it is on top of everything else
-  }
+    zIndex: 1000, // Ensure it is on top of everything else
+  },
 });

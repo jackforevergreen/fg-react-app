@@ -1,41 +1,32 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  Header,
-  RadioButtonGroup,
-  NextButton,
-} from "@/components/carbon-calculator";
+import { Header, RadioButtonGroup, NextButton } from "@/components/carbon-calculator";
 import { useEmissions } from "@/contexts";
 import { calculateEmissions } from "@/api/emissions"; // Adjust the import path as needed
 
-
 export default function DietCalculator() {
-  const { transportationData, dietData, updateDietData, updateTotalData } =
-    useEmissions();
+  const { transportationData, dietData, updateDietData, updateTotalData } = useEmissions();
 
   const [diet, setDiet] = useState(dietData.diet || "Average");
-  const [dietEmissions, setDietEmissions] = useState(
-    dietData.dietEmissions || 0.0
-  );
-  const transportationEmissions =
-    transportationData.transportationEmissions || 0;
+  const [dietEmissions, setDietEmissions] = useState(dietData.dietEmissions || 0.0);
+  const transportationEmissions = transportationData.transportationEmissions || 0;
   const [isFormValid, setIsFormValid] = useState(false);
   const [progress, setProgress] = useState(0.33);
 
-  
   useEffect(() => {
     setIsFormValid(diet !== "");
 
     // Create a new object with the current diet and other necessary data
     const emissionsData = {
-      dietData: { diet, dietEmissions },
       transportationData,
+      dietData: { diet, dietEmissions },
+      energyData: {}, // Placeholder for now
       totalData: {
         transportationEmissions,
         dietEmissions: 0, // This will be updated
         energyEmissions: 0, // Placeholder for now
-        totalEmissions: 0,  // This will be updated
+        totalEmissions: 0, // This will be updated
       },
     };
 
@@ -58,7 +49,6 @@ export default function DietCalculator() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [diet]);
 
-
   return (
     <ScrollView contentContainerStyle={styles.scrollView}>
       <SafeAreaView>
@@ -69,13 +59,7 @@ export default function DietCalculator() {
           {/* Diet Selection */}
           <RadioButtonGroup
             question="Select your Diet"
-            options={[
-              "Meat Lover",
-              "Average",
-              "No Beef Or Lamb",
-              "Veterinarian",
-              "Vegan",
-            ]}
+            options={["Meat Lover", "Average", "No Beef Or Lamb", "Veterinarian", "Vegan"]}
             value={diet}
             onChange={(selectedDiet: string) => {
               setDiet(selectedDiet);
@@ -85,26 +69,18 @@ export default function DietCalculator() {
 
           {/* Emissions Display */}
           <View style={styles.emissionsContainer}>
-            <Text style={styles.emissionsTitle}>
-              Your Estimated Individual Diet Emissions
-            </Text>
+            <Text style={styles.emissionsTitle}>Your Estimated Individual Diet Emissions</Text>
             <View style={styles.emissionRow}>
               <Text style={styles.emissionLabel}>Transportation Emissions</Text>
-              <Text style={styles.emissionValue}>
-                {transportationEmissions.toFixed(2)}
-              </Text>
+              <Text style={styles.emissionValue}>{transportationEmissions.toFixed(2)}</Text>
             </View>
             <View style={styles.emissionRow}>
               <Text style={styles.emissionLabel}>Diet Emissions</Text>
-              <Text style={styles.emissionValue}>
-                {dietEmissions.toFixed(2)}
-              </Text>
+              <Text style={styles.emissionValue}>{dietEmissions.toFixed(2)}</Text>
             </View>
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.totalValue}>
-                {(transportationEmissions + dietEmissions).toFixed(2)}
-              </Text>
+              <Text style={styles.totalValue}>{(transportationEmissions + dietEmissions).toFixed(2)}</Text>
               <Text style={styles.totalUnit}>tons of CO2 per year</Text>
             </View>
           </View>
@@ -120,6 +96,7 @@ export default function DietCalculator() {
 const styles = StyleSheet.create({
   scrollView: {
     flexGrow: 1,
+    backgroundColor: "#fff",
   },
   contentContainer: {
     paddingHorizontal: 48,

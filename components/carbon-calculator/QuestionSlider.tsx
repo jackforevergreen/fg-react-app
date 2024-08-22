@@ -1,4 +1,4 @@
-import React from "react";
+import { useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Slider } from "@react-native-assets/slider";
 
@@ -15,6 +15,11 @@ const QuestionSlider = ({
   minimumValue: number;
   maximumValue: number;
 }) => {
+  const [localValue, setLocalValue] = useState(value);
+
+  const handleSlidingComplete = (newValue: number) => {
+    onChange(newValue);
+  };
   return (
     <View style={styles.container}>
       <Text style={styles.questionText}>{question}</Text>
@@ -23,8 +28,9 @@ const QuestionSlider = ({
           minimumValue={minimumValue}
           maximumValue={maximumValue}
           step={1}
-          value={value}
-          onValueChange={onChange}
+          value={localValue}
+          onValueChange={setLocalValue}
+          onSlidingComplete={handleSlidingComplete}
           minimumTrackTintColor="#8E8F8E"
           maximumTrackTintColor="#D9D9D9"
           thumbTintColor="#8E8F8E"
@@ -33,7 +39,9 @@ const QuestionSlider = ({
           CustomMark={({ value, active }) => (
             <View style={styles.labelsContainer}>
               {active ? (
-                <Text style={styles.activeLabel}>{value < 7 ? value : "7+"}</Text>
+                <Text style={styles.activeLabel}>
+                  {value < 7 ? value : "7+"}
+                </Text>
               ) : (
                 <Text style={styles.labelText}>{value < 7 ? value : "7+"}</Text>
               )}

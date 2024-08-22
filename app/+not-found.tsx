@@ -1,4 +1,4 @@
-import { Link, Stack } from "expo-router";
+import { router, Stack } from "expo-router";
 import { StyleSheet, View, Text, Image, TouchableOpacity } from "react-native";
 import { fourofour } from "@/constants/Images";
 
@@ -9,13 +9,9 @@ export default function NotFoundScreen() {
       <View style={styles.container}>
         <Text style={styles.errorCode}>404</Text>
         <Text style={styles.errorMessage}>Page Not Found</Text>
-        <Image 
-          source={fourofour} style={styles.image}
-        />
-        <TouchableOpacity onPress={() => {}} style={styles.button}>
-          <Link href="/" style={styles.link}>
-            <Text style={styles.buttonText}>Back Home</Text>
-          </Link>
+        <Image source={fourofour} style={styles.image} />
+        <TouchableOpacity onPress={() => router.replace("/")} style={styles.button}>
+          <Text style={styles.buttonText}>Back Home</Text>
         </TouchableOpacity>
       </View>
     </>
@@ -57,8 +53,5 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 18,
     fontWeight: "bold",
-  },
-  link: {
-    textDecorationLine: "none",
   },
 });

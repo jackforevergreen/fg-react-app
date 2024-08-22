@@ -1,54 +1,5 @@
 import React, { useState, createContext, useContext } from "react";
-
-interface TransportationData {
-  longFlights?: number;
-  shortFlights?: number;
-  carType?: string;
-  milesPerWeek?: string;
-  useTrain?: string;
-  trainFrequency?: string;
-  useBus?: string;
-  busFrequency?: string;
-  walkBike?: string;
-  walkBikeFrequency?: string;
-  flightEmissions?: number;
-  carEmissions?: number;
-  publicTransportEmissions?: number;
-  transportationEmissions?: number;
-}
-
-interface DietData {
-  diet?: string;
-  dietEmissions?: number;
-}
-
-interface EnergyData {
-  state?: string;
-  electricBill?: string;
-  waterBill?: string;
-  propaneBill?: string;
-  gasBill?: string;
-  useWoodStove?: string;
-  peopleInHome?: number;
-  electricEmissions?: number;
-  waterEmissions?: number;
-  otherEnergyEmissions?: number;
-  energyEmissions?: number;
-}
-
-interface TotalData {
-  transportationEmissions: number;
-  dietEmissions: number;
-  energyEmissions: number;
-  totalEmissions: number;
-}
-
-interface EmissionsData {
-  transportationData: TransportationData;
-  dietData: DietData;
-  energyData: EnergyData;
-  totalData: TotalData;
-}
+import { TransportationData, DietData, EnergyData, TotalData, EmissionsData } from "@/types";
 
 interface EmissionsContextType extends EmissionsData {
   updateTransportationData: (data: Partial<TransportationData>) => void;
@@ -86,8 +37,7 @@ const EmissionsContext = createContext<EmissionsContextType>({
 });
 
 export function EmissionsProvider({ children }: { children: React.ReactNode }) {
-  const [transportationData, setTransportationData] =
-    useState<TransportationData>({});
+  const [transportationData, setTransportationData] = useState<TransportationData>({});
   const [dietData, setDietData] = useState<DietData>({});
   const [energyData, setEnergyData] = useState<EnergyData>({});
   const [totalData, setTotalData] = useState<TotalData>({

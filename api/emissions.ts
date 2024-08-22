@@ -1,28 +1,8 @@
-import {
-  getFirestore,
-  doc,
-  getDoc,
-  setDoc,
-  collection,
-  serverTimestamp,
-} from "firebase/firestore";
+import { getFirestore, doc, getDoc, setDoc, collection, serverTimestamp } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import dayjs from "dayjs";
-
-interface EmissionsData {
-  energyData?: any;
-  transportationData?: any;
-  dietData?: {
-    diet: string;
-    dietEmissions: number;
-  };
-  totalData: {
-    transportationEmissions: number;
-    dietEmissions: number;
-    energyEmissions: number;
-    totalEmissions: number;
-  };
-}
+import { stateData } from "@/types";
+import { EmissionsData } from "@/types";
 
 // Fetch emissions data for a specific month
 const saveEmissionsData = async (data: EmissionsData) => {
@@ -36,10 +16,7 @@ const saveEmissionsData = async (data: EmissionsData) => {
 
   const userId = auth.currentUser.uid;
   const formattedMonth = dayjs().format("YYYY-MM");
-  const userDocRef = doc(
-    collection(db, "users", userId, "surveys"),
-    formattedMonth
-  );
+  const userDocRef = doc(collection(db, "users", userId, "surveys"), formattedMonth);
 
   try {
     await setDoc(
@@ -61,25 +38,20 @@ const fetchEmissionsData = async (month?: string, userId?: string) => {
   const auth = getAuth();
   const db = getFirestore();
 
-  if (!auth.currentUser) {
-    console.error("No user logged in");
+  if (!auth.currentUser && !userId) {
+    console.error("No user logged in and no userId provided");
     return null;
   }
 
-  if (!userId) {
-    userId = auth.currentUser.uid;
-  }
+  userId = userId || auth.currentUser!.uid;
 
   let formattedMonth = month || dayjs().format("YYYY-MM");
 
-  const DocRef = doc(
-    collection(db, "users", userId, "surveys"),
-    formattedMonth
-  );
+  const DocRef = doc(collection(db, "users", userId, "surveys"), formattedMonth);
 
   try {
     const Doc = await getDoc(DocRef);
-    return Doc.exists() ? Doc.data() : null;
+    return Doc.exists() ? (Doc.data() as EmissionsData) : null;
   } catch (error) {
     console.error("Error fetching data:", error);
     return null;
@@ -107,17 +79,18 @@ const calculateEmissions = (data: EmissionsData) => {
         : 0;
 
     const publicTransportEmissions =
-      parseFloat(trainFrequency || "0") * 0.002912 * 52 +
-      parseFloat(busFrequency || "0") * 0.005824 * 52;
+      parseFloat(trainFrequency || "0") * 0.002912 * 52 + parseFloat(busFrequency || "0") * 0.005824 * 52;
 
-      transportationEmissions = flightEmissions + carEmissions + publicTransportEmissions;
+    transportationEmissions = flightEmissions + carEmissions + publicTransportEmissions;
 
-      // Set the calculated emissions back into transportationData
-      transportationData.flightEmissions = flightEmissions;
-      transportationData.carEmissions = carEmissions;
-      transportationData.publicTransportEmissions = publicTransportEmissions;
-      transportationData.transportationEmissions = transportationEmissions;
+    // Set the calculated emissions back into transportationData
+    transportationData.flightEmissions = flightEmissions;
+    transportationData.carEmissions = carEmissions;
+    transportationData.publicTransportEmissions = publicTransportEmissions;
+    transportationData.transportationEmissions = transportationEmissions;
   }
+  totalData.transportationEmissions = transportationEmissions;
+
   // Diet Calculation
   let dietEmissions = 0.0;
 
@@ -132,7 +105,7 @@ const calculateEmissions = (data: EmissionsData) => {
       case "No Beef Or Lamb":
         dietEmissions = 1.9;
         break;
-      case "Veterinarian":
+      case "Vegetarian":
         dietEmissions = 1.7;
         break;
       case "Vegan":
@@ -142,36 +115,38 @@ const calculateEmissions = (data: EmissionsData) => {
         dietEmissions = 0.0;
     }
   }
-  totalData.transportationEmissions = transportationEmissions;
 
   totalData.dietEmissions = dietEmissions;
-  
+
   // Energy Calculation
   let energyEmissions = 0.0;
-  if (energyData && energyData.state && energyData.electricBill && energyData.waterBill && energyData.propaneBill && energyData.gasBill && energyData.peopleInHome) {
-    const stateData = statesData.find((s) => s.name === energyData.state);
+  let statesData: stateData[] = require("../constants/states.json");
+  if (energyData) {
+    const { state, electricBill, waterBill, propaneBill, gasBill, peopleInHome } = energyData;
 
-    if (stateData) {
-      const electricityEmissions = (stateData.stateEGridValue / 2000) * (parseFloat(energyData.electricBill) / stateData.averageMonthlyElectricityBill);
-      const waterEmissions = (parseFloat(energyData.waterBill) / stateData.averageMonthlyWaterBill) * 0.0052;
-      const propaneEmissions = (parseFloat(energyData.propaneBill) / stateData.averageMonthlyPropaneBill) * 0.24;
-      const gasEmissions = (parseFloat(energyData.gasBill) / stateData.averageMonthlyGasBill) * 2.12;
+    if (state && electricBill && waterBill && propaneBill && gasBill && peopleInHome) {
+      const stateData = statesData.find((s) => s.name === state);
 
-      energyEmissions = (electricityEmissions + waterEmissions + propaneEmissions + gasEmissions) / energyData.peopleInHome;
+      if (stateData) {
+        const electricityEmissions =
+          (stateData.stateEGridValue / 2000) * (parseFloat(electricBill) / stateData.averageMonthlyElectricityBill);
+        const waterEmissions = (parseFloat(waterBill) / stateData.averageMonthlyWaterBill) * 0.0052;
+        const propaneEmissions = (parseFloat(propaneBill) / stateData.averageMonthlyPropaneBill) * 0.24;
+        const gasEmissions = (parseFloat(gasBill) / stateData.averageMonthlyGasBill) * 2.12;
 
-      // Update energyData with calculated emissions
-      energyData.electricEmissions = electricityEmissions;
-      energyData.waterEmissions = waterEmissions;
-      energyData.otherEnergyEmissions = propaneEmissions + gasEmissions;
-      energyData.energyEmissions = energyEmissions;
+        energyEmissions = (electricityEmissions + waterEmissions + propaneEmissions + gasEmissions) / peopleInHome;
+
+        // Update energyData with calculated emissions
+        energyData.electricEmissions = electricityEmissions;
+        energyData.waterEmissions = waterEmissions;
+        energyData.otherEnergyEmissions = propaneEmissions + gasEmissions;
+        energyData.energyEmissions = energyEmissions;
+      }
     }
   }
 
-
-  totalData.totalEmissions =
-    totalData.transportationEmissions +
-    totalData.dietEmissions +
-    totalData.energyEmissions;
+  totalData.energyEmissions = energyEmissions;
+  totalData.totalEmissions = totalData.transportationEmissions + totalData.dietEmissions + totalData.energyEmissions;
 
   return totalData;
 };

@@ -10,9 +10,7 @@ import {
 
 const PreSurveyScreen = () => {
   const { fromIndex } = useLocalSearchParams<{ fromIndex: string }>();
-  // const params = router.getState().params; // Access the global router's state to get params
-  // const fromIndex = params?.fromIndex === "true"; // Convert to boolean
-
+  
   return (
     <ScrollView style={styles.container}>
       <View style={styles.circleBottom} />
