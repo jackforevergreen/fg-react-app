@@ -8,6 +8,7 @@ import { Linking, Platform } from "react-native";
 import { StripeProvider, useStripe } from "@/utils/stripe";
 import { initializeFirebase } from "@/utils/firebaseConfig";
 import { Notifications } from "../api/notifications"; // Import the new module
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
 export default function RootLayout() {
   initializeFirebase();
@@ -20,6 +21,11 @@ export default function RootLayout() {
     if (loaded) {
       SplashScreen.hideAsync();
     }
+
+    GoogleSignin.configure({
+      webClientId:
+        "489135632905-iu340mh7lub0iis2q18upvus42fa2roo.apps.googleusercontent.com",
+    });
 
     if (Platform.OS === "android" || Platform.OS === "ios") {
       Notifications.setupMessaging();

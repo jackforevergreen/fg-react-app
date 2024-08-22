@@ -1,13 +1,6 @@
 import { router } from "expo-router";
 import React, { useEffect, useState, useCallback } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Pressable,
-} from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Pressable } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 import { Image } from "expo-image";
@@ -82,12 +75,7 @@ const MyProfileScreen = () => {
       <View style={styles.profile}>
         {/* <ProfileIcon /> */}
         {profileIcon ? (
-          <Image
-            source={profileIcon}
-            placeholder={blurhash}
-            contentFit={"cover"}
-            style={styles.avatar}
-          />
+          <Image source={profileIcon} placeholder={blurhash} contentFit={"cover"} style={styles.avatar} />
         ) : (
           <Icon name={"user"} size={192} />
         )}
@@ -98,7 +86,7 @@ const MyProfileScreen = () => {
             onPress={() =>
               router.push({
                 pathname: "/friends/[uid]",
-                params: { uid: user?.uid, type: "Followers" },
+                params: { uid: user?.uid || "", type: "Followers" },
               })
             }
           >
@@ -110,7 +98,7 @@ const MyProfileScreen = () => {
             onPress={() =>
               router.push({
                 pathname: "/friends/[uid]",
-                params: { uid: user?.uid, type: "Following" },
+                params: { uid: user?.uid || "", type: "Following" },
               })
             }
           >
@@ -129,17 +117,13 @@ const MyProfileScreen = () => {
         </View>
       </View>
       <View style={styles.breakdown}>
-        <Text style={{ fontSize: 28, textAlign: "center", marginBottom: 16 }}>
-          Your net-zero journey
-        </Text>
+        <Text style={{ fontSize: 28, textAlign: "center", marginBottom: 16 }}>Your net-zero journey</Text>
         <LineChartBreakdown />
         <TouchableOpacity
           style={[styles.button, { marginHorizontal: "auto" }]}
           onPress={() => router.navigate("/offset-now")}
         >
-          <Text style={{ color: "#fff", fontSize: 24, textAlign: "center" }}>
-            Offset Now!
-          </Text>
+          <Text style={{ color: "#fff", fontSize: 24, textAlign: "center" }}>Offset Now!</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>

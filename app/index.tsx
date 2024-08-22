@@ -26,9 +26,7 @@ export default function Index() {
         const emissionsData = await fetchEmissionsData();
         if (emissionsData) {
           const lastUpdated = emissionsData.lastUpdated?.toDate();
-          const daysSinceLastUpdate = lastUpdated
-            ? dayjs().diff(dayjs(lastUpdated), "day")
-            : null;
+          const daysSinceLastUpdate = lastUpdated ? dayjs().diff(dayjs(lastUpdated), "day") : null;
 
           const hasCalculated = daysSinceLastUpdate !== null && daysSinceLastUpdate <= 30;
           setHasCalculatedEmissions(hasCalculated);
@@ -76,10 +74,7 @@ export default function Index() {
             <Icon name="arrow-right" size={24} color="#FFF" />
           </View>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => router.push("/_sitemap")}
-        >
+        <TouchableOpacity style={styles.button} onPress={() => router.push("/_sitemap")}>
           <View style={styles.buttonContent}>
             <View style={styles.buttonLabel}>
               <Icon name="map" size={24} color="#FFF" />

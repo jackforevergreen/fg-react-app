@@ -15,16 +15,10 @@ import {
   deleteUser,
   reauthenticateWithCredential,
 } from "firebase/auth";
-import {
-  getFirestore,
-  doc,
-  setDoc,
-  getDoc,
-  serverTimestamp,
-} from "firebase/firestore";
+import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { fetchEmissionsData } from "./emissions";
-import { sendWelcomeEmail } from "./email";
+import { sendAccountDeletionEmail, sendWelcomeEmail } from "./email";
 
 // Helper function to check if a user exists in the database
 const checkUserExists = async (uid: string): Promise<boolean> => {
@@ -106,11 +100,7 @@ const onSignup = async (email: string, password: string, name: string) => {
       });
     } else {
       // Create new account
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName: name });
       await createUserProfile({
         uid: userCredential.user.uid,
@@ -138,8 +128,7 @@ const onGoogleSignUp = async () => {
     let currentUser;
     if (auth.currentUser && auth.currentUser.isAnonymous) {
       // Link anonymous account with Google
-      currentUser = (await linkWithCredential(auth.currentUser, credential))
-        .user;
+      currentUser = (await linkWithCredential(auth.currentUser, credential)).user;
     } else {
       // Sign in with Google
       currentUser = (await signInWithCredential(auth, credential)).user;
@@ -238,18 +227,16 @@ const handleResetPassword = async (email: string) => {
 
   try {
     await sendPasswordResetEmail(auth, email);
-    Alert.alert(
-      "Success",
-      "Password reset email sent. Please check your inbox.",
-      [{ text: "OK", onPress: () => router.push("/login") }]
-    );
+    Alert.alert("Success", "Password reset email sent. Please check your inbox.", [
+      { text: "OK", onPress: () => router.push("/login") },
+    ]);
   } catch (error: any) {
     Alert.alert("Error", `Failed to send reset email: ${error.message}`);
     console.error(`Error: Failed to send reset email: ${error.message}`);
   }
 };
 
-const deleteUserAccount = async () => {
+const deleteUserAccount = async (password?: string) => {
   const auth = getAuth();
   const user = auth.currentUser;
 
@@ -258,7 +245,27 @@ const deleteUserAccount = async () => {
   }
 
   try {
+    const providerData = user.providerData;
+    const isGoogleUser = providerData.some((provider) => provider.providerId === GoogleAuthProvider.PROVIDER_ID);
+
+    if (isGoogleUser) {
+      // Re-authenticate with Google
+      await GoogleSignin.hasPlayServices();
+      const { idToken } = await GoogleSignin.signIn();
+      const credential = GoogleAuthProvider.credential(idToken);
+      await reauthenticateWithCredential(user, credential);
+    } else {
+      // For email/password users
+      if (!password) {
+        throw new Error("Password is required to delete your account.");
+      }
+
+      const credential = EmailAuthProvider.credential(user.email!, password);
+      await reauthenticateWithCredential(user, credential);
+    }
+
     // Delete the user's authentication account
+    await sendAccountDeletionEmail(user.email || "", user.displayName || "User");
     await deleteUser(user);
 
     console.log("User account deleted successfully");

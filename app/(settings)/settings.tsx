@@ -1,14 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  Modal,
-  TextInput,
-  Alert,
-} from "react-native";
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Modal, TextInput, Alert } from "react-native";
 import Icon from "react-native-vector-icons/Feather";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 import { Href, router, useRouter } from "expo-router";
@@ -17,6 +8,7 @@ import { Image } from "expo-image";
 import { BackButton, PageHeader } from "@/components/common";
 import { logout, deleteUserAccount } from "@/api/auth";
 import { useStripe } from "@/utils/stripe";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const blurhash =
   "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[";
@@ -27,10 +19,7 @@ interface SettingsItemProps {
 }
 
 const SettingsItem: React.FC<SettingsItemProps> = ({ title, screen }) => (
-  <TouchableOpacity
-    onPress={() => router.push(screen)}
-    style={styles.settingsItem}
-  >
+  <TouchableOpacity onPress={() => router.push(screen)} style={styles.settingsItem}>
     <Text style={styles.settingsItemTitle}>{title}</Text>
     <Icon name="chevron-right" size={48} />
   </TouchableOpacity>
@@ -44,12 +33,14 @@ export default function ProfileScreen() {
   const profileIcon = auth.currentUser?.photoURL;
   const { resetPaymentSheetCustomer } = useStripe();
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [isGoogleUser, setIsGoogleUser] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
+        setIsGoogleUser(currentUser.providerData.some((provider) => provider.providerId === "google.com"));
       } else {
         router.replace("/login");
       }
@@ -93,14 +84,14 @@ export default function ProfileScreen() {
   };
 
   const handleDeleteAccount = async () => {
-    if (deleteConfirmation !== "DELETE") {
+    if (isGoogleUser && deleteConfirmation !== "DELETE") {
       Alert.alert("Error", "Please type DELETE to confirm account deletion.");
       return;
     }
 
     try {
       setIsDeleteModalVisible(false); // Close the modal before proceeding
-      await deleteUserAccount();
+      await deleteUserAccount(isGoogleUser ? undefined : deleteConfirmation);
 
       // Use setTimeout to delay the navigation slightly, ensuring the modal is fully closed
       setTimeout(() => {
@@ -117,134 +108,133 @@ export default function ProfileScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <PageHeader subtitle="Settings" />
-      <BackButton />
-      <View style={styles.profileContainer}>
-        <View style={styles.profileInfo}>
-          <View style={styles.profileImageBG}>
-            {profileIcon ? (
-              <Image
-                style={styles.profileImage}
-                source={{ uri: profileIcon }}
-                placeholder={blurhash}
-                contentFit="cover"
-              />
-            ) : (
-              <Text style={styles.profileEmoji}>👤</Text>
-            )}
-          </View>
-          <View style={styles.profileTextContainer}>
-            <Text style={styles.profileName}>
-              {user?.displayName || "Guest"}
-            </Text>
-            <Text style={styles.profileEmail}>{user?.email || ""}</Text>
-          </View>
-        </View>
-
-        <SettingsItem title="Profile Settings" screen="/profile-settings" />
-        <SettingsItem title="Payment Methods" screen="/payment-methods" />
-        <SettingsItem title="Purchase History" screen="/purchase-history" />
-        <SettingsItem title="Notifications" screen="/notifications-settings" />
-
-        <View style={styles.carbonFootprint}>
-          <Text style={styles.carbonFootprintTitle}>
-            Your carbon footprint...
-          </Text>
-          <View style={styles.carbonFootprintContent}>
-            <Text style={styles.emissionText}>
-              {totalEmissions.toFixed(2)}
-              <Text style={styles.emissionUnit}> tons of CO₂</Text>
-            </Text>
-            <TouchableOpacity
-              onPress={() => router.push("/offset-now")}
-              style={styles.offsetButton}
-            >
-              <Text style={styles.offsetButtonText}>Offset Now!</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={styles.manageSubscriptions}>
-          <Text style={styles.manageSubscriptionsTitle}>
-            Manage Subscriptions
-          </Text>
-          <View style={styles.subscriptionButtons}>
-            <TouchableOpacity
-              onPress={() => router.push("/subscriptions-settings")}
-              style={styles.subscriptionButton}
-            >
-              <Text style={styles.subscriptionEmoji}>⚙️</Text>
-              <Text style={styles.subscriptionButtonText}>Settings</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => router.push("/subscriptions")}
-              style={styles.subscriptionButton}
-            >
-              <Text style={styles.subscriptionEmoji}>🛒</Text>
-              <Text style={styles.subscriptionButtonText}>
-                View Subscriptions
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-          <Text style={styles.logoutButtonText}>Logout</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.deleteAccountButton}
-          onPress={() => setIsDeleteModalVisible(true)}
-        >
-          <Text style={styles.deleteAccountButtonText}>Delete Account</Text>
-        </TouchableOpacity>
-
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={isDeleteModalVisible}
-          onRequestClose={() => setIsDeleteModalVisible(false)}
-        >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Delete Account</Text>
-              <Text style={styles.modalText}>
-                Are you sure you want to delete your account? This action cannot
-                be undone.
-              </Text>
-              <Text style={styles.modalText}>
-                To confirm, please type DELETE in all caps:
-              </Text>
-              <TextInput
-                style={styles.deleteConfirmationInput}
-                placeholder="Type DELETE here"
-                value={deleteConfirmation}
-                onChangeText={setDeleteConfirmation}
-                autoCapitalize="characters"
-              />
-              <View style={styles.modalButtons}>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.cancelButton]}
-                  onPress={() => {
-                    setIsDeleteModalVisible(false);
-                    setDeleteConfirmation("");
-                  }}
-                >
-                  <Text style={styles.modalButtonText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.deleteButton]}
-                  onPress={handleDeleteAccount}
-                >
-                  <Text style={styles.modalButtonText}>Delete Account</Text>
-                </TouchableOpacity>
-              </View>
+    <SafeAreaView style={{ flexGrow: 1, backgroundColor: "#fff" }}>
+      <ScrollView style={styles.container}>
+        <PageHeader subtitle="Settings" />
+        <BackButton />
+        <View style={styles.profileContainer}>
+          <View style={styles.profileInfo}>
+            <View style={styles.profileImageBG}>
+              {profileIcon ? (
+                <Image
+                  style={styles.profileImage}
+                  source={{ uri: profileIcon }}
+                  placeholder={blurhash}
+                  contentFit="cover"
+                />
+              ) : (
+                <Icon
+                  color="#fff"
+                  name={"user"}
+                  size={64}
+                  style={{ marginHorizontal: "auto", marginVertical: "auto" }}
+                />
+              )}
+            </View>
+            <View style={styles.profileTextContainer}>
+              <Text style={styles.profileName}>{user?.displayName || "Guest"}</Text>
+              <Text style={styles.profileEmail}>{user?.email || ""}</Text>
             </View>
           </View>
-        </Modal>
-      </View>
-    </ScrollView>
+
+          <SettingsItem title="Profile Settings" screen="/profile-settings" />
+          <SettingsItem title="Payment Methods" screen="/payment-methods" />
+          <SettingsItem title="Purchase History" screen="/purchase-history" />
+          <SettingsItem title="Notifications" screen="/notifications-settings" />
+
+          <View style={styles.carbonFootprint}>
+            <Text style={styles.carbonFootprintTitle}>Your carbon footprint...</Text>
+            <View style={styles.carbonFootprintContent}>
+              <Text style={styles.emissionText}>
+                {totalEmissions.toFixed(2)}
+                <Text style={styles.emissionUnit}> tons of CO₂</Text>
+              </Text>
+              <TouchableOpacity onPress={() => router.push("/offset-now")} style={styles.offsetButton}>
+                <Text style={styles.offsetButtonText}>Offset Now!</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={styles.manageSubscriptions}>
+            <Text style={styles.manageSubscriptionsTitle}>Manage Subscriptions</Text>
+            <View style={styles.subscriptionButtons}>
+              <TouchableOpacity
+                onPress={() => router.push("/subscriptions-settings")}
+                style={styles.subscriptionButton}
+              >
+                <Text style={styles.subscriptionEmoji}>⚙️</Text>
+                <Text style={styles.subscriptionButtonText}>Settings</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push("/subscriptions")} style={styles.subscriptionButton}>
+                <Text style={styles.subscriptionEmoji}>🛒</Text>
+                <Text style={styles.subscriptionButtonText}>View Subscriptions</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+            <Text style={styles.logoutButtonText}>Logout</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.deleteAccountButton} onPress={() => setIsDeleteModalVisible(true)}>
+            <Text style={styles.deleteAccountButtonText}>Delete Account</Text>
+          </TouchableOpacity>
+
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={isDeleteModalVisible}
+            onRequestClose={() => setIsDeleteModalVisible(false)}
+          >
+            <View style={styles.modalContainer}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Delete Account</Text>
+                <Text style={styles.modalText}>
+                  Are you sure you want to delete your account? This action cannot be undone.
+                </Text>
+                {isGoogleUser ? (
+                  <>
+                    <Text style={styles.modalText}>To confirm, please type DELETE in all caps:</Text>
+                    <TextInput
+                      style={styles.deleteConfirmationInput}
+                      placeholder="Type DELETE here"
+                      value={deleteConfirmation}
+                      onChangeText={setDeleteConfirmation}
+                      autoCapitalize="characters"
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Text style={styles.modalText}>Please enter your password to confirm:</Text>
+                    <TextInput
+                      style={styles.deleteConfirmationInput}
+                      placeholder="Enter your password"
+                      value={deleteConfirmation}
+                      onChangeText={setDeleteConfirmation}
+                      secureTextEntry
+                    />
+                  </>
+                )}
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.cancelButton]}
+                    onPress={() => {
+                      setIsDeleteModalVisible(false);
+                      setDeleteConfirmation("");
+                    }}
+                  >
+                    <Text style={styles.modalButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.modalButton, styles.deleteButton]} onPress={handleDeleteAccount}>
+                    <Text style={styles.modalButtonText}>Delete Account</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
