@@ -1,11 +1,5 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  KeyboardAvoidingView,
-  StyleSheet,
-} from "react-native";
+import { useState, useEffect } from "react";
+import { View, Text, ScrollView, KeyboardAvoidingView, StyleSheet, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Header,
@@ -16,41 +10,25 @@ import {
   NextButton,
 } from "@/components/carbon-calculator";
 import { useEmissions } from "@/contexts";
+import { calculateEmissions } from "@/api/emissions"; // Adjust import path as necessary
 
 export default function TransportationCalculator() {
   // Context for data
-  const { transportationData, updateTransportationData, updateTotalData } =
-    useEmissions();
+  const { transportationData, updateTransportationData, updateTotalData } = useEmissions();
 
   // Transportation emissions calculation
-  const [longFlights, setLongFlights] = useState(
-    transportationData.longFlights || 0
-  );
-  const [shortFlights, setShortFlights] = useState(
-    transportationData.shortFlights || 0
-  );
+  const [longFlights, setLongFlights] = useState(transportationData.longFlights || 0);
+  const [shortFlights, setShortFlights] = useState(transportationData.shortFlights || 0);
   const [carType, setCarType] = useState(transportationData.carType || "Gas");
-  const [milesPerWeek, setMilesPerWeek] = useState(
-    transportationData.milesPerWeek || "300"
-  );
+  const [milesPerWeek, setMilesPerWeek] = useState(transportationData.milesPerWeek || "300");
   const [useTrain, setUseTrain] = useState(transportationData.useTrain || "No");
-  const [trainFrequency, setTrainFrequency] = useState(
-    transportationData.trainFrequency || "1"
-  );
+  const [trainFrequency, setTrainFrequency] = useState(transportationData.trainFrequency || "1");
   const [useBus, setUseBus] = useState(transportationData.useBus || "No");
-  const [busFrequency, setBusFrequency] = useState(
-    transportationData.busFrequency || "1"
-  );
+  const [busFrequency, setBusFrequency] = useState(transportationData.busFrequency || "1");
   const [walkBike, setWalkBike] = useState(transportationData.walkBike || "No");
-  const [walkBikeFrequency, setWalkBikeFrequency] = useState(
-    transportationData.walkBikeFrequency || "1"
-  );
-  const [flightEmissions, setFlightEmissions] = useState(
-    transportationData.flightEmissions || 0.0
-  );
-  const [carEmissions, setCarEmissions] = useState(
-    transportationData.carEmissions || 0.0
-  );
+  const [walkBikeFrequency, setWalkBikeFrequency] = useState(transportationData.walkBikeFrequency || "1");
+  const [flightEmissions, setFlightEmissions] = useState(transportationData.flightEmissions || 0.0);
+  const [carEmissions, setCarEmissions] = useState(transportationData.carEmissions || 0.0);
   const [publicTransportEmissions, setPublicTransportEmissions] = useState(
     transportationData.publicTransportEmissions || 0.0
   );
@@ -59,34 +37,8 @@ export default function TransportationCalculator() {
   );
 
   useEffect(() => {
-    const calculateEmissions = () => {
-      const flightEmissions = longFlights * 1.35 + shortFlights * 0.9;
-
-      const carEmissionRates: { [key: string]: number } = {
-        Gas: 300,
-        Hybrid: 250,
-        Electric: 200,
-      };
-
-      const carEmissions =
-        carType && milesPerWeek && carType in carEmissionRates
-          ? (carEmissionRates[carType] * parseFloat(milesPerWeek) * 52) /
-            1000000
-          : 0;
-
-      const publicTransportEmissions =
-        parseFloat(trainFrequency) * 0.002912 * 52 +
-        parseFloat(busFrequency) * 0.005824 * 52;
-
-      const transportationEmissions =
-        flightEmissions + carEmissions + publicTransportEmissions;
-
-      setFlightEmissions(flightEmissions);
-      setCarEmissions(carEmissions);
-      setPublicTransportEmissions(publicTransportEmissions);
-      setTransportationEmissions(transportationEmissions);
-
-      updateTransportationData({
+    const emissionsData = {
+      transportationData: {
         longFlights,
         shortFlights,
         carType,
@@ -101,13 +53,27 @@ export default function TransportationCalculator() {
         carEmissions,
         publicTransportEmissions,
         transportationEmissions,
-      });
-
-      updateTotalData({
-        transportationEmissions,
-      });
+      },
+      dietData: {},
+      energyData: {},
+      totalData: {
+        transportationEmissions: 0, // Will be updated by calculateEmissions
+        dietEmissions: 0,
+        energyEmissions: 0,
+        totalEmissions: 0,
+      },
     };
-    calculateEmissions();
+
+    const updatedTotalData = calculateEmissions(emissionsData);
+
+    // Update the flight emissions specifically after the calculation
+    setFlightEmissions(emissionsData.transportationData.flightEmissions || 0);
+    setCarEmissions(emissionsData.transportationData.carEmissions || 0);
+    setPublicTransportEmissions(emissionsData.transportationData.publicTransportEmissions || 0);
+    setTransportationEmissions(updatedTotalData.transportationEmissions);
+
+    updateTransportationData(emissionsData.transportationData);
+    updateTotalData(updatedTotalData);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     longFlights,
@@ -139,13 +105,9 @@ export default function TransportationCalculator() {
   };
 
   useEffect(() => {
-    const updateProgress = () => {
-      const totalQuestions = Object.keys(completedQuestions).length;
-      const completedCount =
-        Object.values(completedQuestions).filter(Boolean).length;
-      setProgress((completedCount / totalQuestions) * 0.33);
-    };
-    updateProgress();
+    const totalQuestions = Object.keys(completedQuestions).length;
+    const completedCount = Object.values(completedQuestions).filter(Boolean).length;
+    setProgress((completedCount / totalQuestions) * 0.33);
   }, [completedQuestions]);
 
   // Form validation
@@ -154,18 +116,15 @@ export default function TransportationCalculator() {
   const [busFrequencyError, setBusFrequencyError] = useState("");
   const [walkBikeFrequencyError, setWalkBikeFrequencyError] = useState("");
   const [isFormValid, setIsFormValid] = useState(false);
+
   useEffect(() => {
     const validateForm = () => {
-      if (
+      const isValid =
         parseFloat(milesPerWeek) <= 3500 &&
         parseFloat(trainFrequency) <= 30 &&
         parseFloat(busFrequency) <= 30 &&
-        parseFloat(walkBikeFrequency) <= 30
-      ) {
-        setIsFormValid(true);
-      } else {
-        setIsFormValid(false);
-      }
+        parseFloat(walkBikeFrequency) <= 30;
+      setIsFormValid(isValid);
     };
 
     validateForm();
@@ -182,14 +141,8 @@ export default function TransportationCalculator() {
       errorSetter("");
     } else if (isNaN(Number(value)) || parseFloat(value) < 0) {
       errorSetter("Please enter a valid amount");
-    } else if (
-      type === "miles" ? parseFloat(value) > 3500 : parseFloat(value) > 30
-    ) {
-      errorSetter(
-        type === "miles"
-          ? "Please enter a value less than 3500"
-          : "Please enter a value less than 30"
-      );
+    } else if (type === "miles" ? parseFloat(value) > 3500 : parseFloat(value) > 30) {
+      errorSetter(type === "miles" ? "Please enter a value less than 3500" : "Please enter a value less than 30");
     } else {
       const decimalPlaces = value.split(".")[1];
       if (decimalPlaces && decimalPlaces.length > 2) {
@@ -202,7 +155,7 @@ export default function TransportationCalculator() {
   };
 
   return (
-    <KeyboardAvoidingView behavior="padding" style={styles.container}>
+    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <SafeAreaView>
           <View style={styles.contentContainer}>
@@ -265,12 +218,7 @@ export default function TransportationCalculator() {
               setFrequency={setTrainFrequency}
               frequencyError={trainFrequencyError}
               validateNumber={(value: string) => {
-                validateNumber(
-                  value,
-                  setTrainFrequency,
-                  setTrainFrequencyError,
-                  "trainFrequency"
-                );
+                validateNumber(value, setTrainFrequency, setTrainFrequencyError, "trainFrequency");
                 if (value !== "") {
                   updateTransportationData({ trainFrequency: value });
                   markQuestionCompleted("trainFrequency");
@@ -278,7 +226,6 @@ export default function TransportationCalculator() {
               }}
               label="time(s)"
             />
-
             <TransportQuestion
               question="Do you use the bus?"
               useTransport={useBus}
@@ -287,20 +234,14 @@ export default function TransportationCalculator() {
               setFrequency={setBusFrequency}
               frequencyError={busFrequencyError}
               validateNumber={(value: string) => {
-                validateNumber(
-                  value,
-                  setBusFrequency,
-                  setBusFrequencyError,
-                  "busFrequency"
-                );
+                validateNumber(value, setBusFrequency, setBusFrequencyError, "busFrequency");
                 if (value !== "") {
                   updateTransportationData({ busFrequency: value });
                   markQuestionCompleted("busFrequency");
                 }
               }}
-              label="time(s) per week"
+              label="time(s)"
             />
-
             <TransportQuestion
               question="Do you walk/bike as a method of transportation?"
               useTransport={walkBike}
@@ -309,38 +250,23 @@ export default function TransportationCalculator() {
               setFrequency={setWalkBikeFrequency}
               frequencyError={walkBikeFrequencyError}
               validateNumber={(value: string) => {
-                validateNumber(
-                  value,
-                  setWalkBikeFrequency,
-                  setWalkBikeFrequencyError,
-                  "walkBikeFrequency"
-                );
+                validateNumber(value, setWalkBikeFrequency, setWalkBikeFrequencyError, "walkBikeFrequency");
                 if (value !== "") {
                   updateTransportationData({ walkBikeFrequency: value });
                   markQuestionCompleted("walkBikeFrequency");
                 }
               }}
-              label="time(s) per week"
+              label="time(s)"
             />
 
             <View style={styles.totalSection}>
-              <Text style={styles.totalTitle}>
-                Your Individual Transportation Emissions
-              </Text>
-              <Text style={styles.totalText}>
-                Flight Emissions: {flightEmissions.toFixed(2)}
-              </Text>
-              <Text style={styles.totalText}>
-                Car Emissions: {carEmissions.toFixed(2)}
-              </Text>
-              <Text style={styles.totalText}>
-                Public Transport: {publicTransportEmissions.toFixed(2)}
-              </Text>
+              <Text style={styles.totalTitle}>Your Individual Transportation Emissions</Text>
+              <Text style={styles.totalText}>Flight Emissions: {flightEmissions.toFixed(2)}</Text>
+              <Text style={styles.totalText}>Car Emissions: {carEmissions.toFixed(2)}</Text>
+              <Text style={styles.totalText}>Public Transport: {publicTransportEmissions.toFixed(2)}</Text>
               <View style={styles.totalRow}>
                 <Text style={styles.boldText}>Total:</Text>
-                <Text style={styles.totalText}>
-                  {transportationEmissions.toFixed(2)}
-                </Text>
+                <Text style={styles.totalText}>{transportationEmissions.toFixed(2)}</Text>
                 <Text style={styles.totalText}>tons of CO2 per year</Text>
               </View>
             </View>
@@ -356,6 +282,7 @@ export default function TransportationCalculator() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#fff",
   },
   scrollViewContent: {
     flexGrow: 1,

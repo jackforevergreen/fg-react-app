@@ -1,15 +1,18 @@
-import { Link, Stack } from "expo-router";
-import { StyleSheet, View, Text } from "react-native";
+import { router, Stack } from "expo-router";
+import { StyleSheet, View, Text, Image, TouchableOpacity } from "react-native";
+import { fourofour } from "@/constants/Images";
 
 export default function NotFoundScreen() {
   return (
     <>
       <Stack.Screen options={{ title: "Oops!" }} />
       <View style={styles.container}>
-        <Text>This screen doesn't exist.</Text>
-        <Link href="/" style={styles.link}>
-          <Text>Go to home screen!</Text>
-        </Link>
+        <Text style={styles.errorCode}>404</Text>
+        <Text style={styles.errorMessage}>Page Not Found</Text>
+        <Image source={fourofour} style={styles.image} />
+        <TouchableOpacity onPress={() => router.replace("/")} style={styles.button}>
+          <Text style={styles.buttonText}>Back Home</Text>
+        </TouchableOpacity>
       </View>
     </>
   );
@@ -21,9 +24,34 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 20,
+    backgroundColor: "#FFFFFF",
   },
-  link: {
-    marginTop: 15,
+  errorCode: {
+    fontSize: 72,
+    fontWeight: "bold",
+    color: "#6DB08B",
+  },
+  errorMessage: {
+    fontSize: 24,
+    fontWeight: "500",
+    color: "#000000",
+    marginVertical: 10,
+  },
+  image: {
+    width: 200,
+    height: 200,
+    marginVertical: 20,
+  },
+  button: {
+    backgroundColor: "#6DB08B",
+    borderRadius: 10,
     paddingVertical: 15,
+    paddingHorizontal: 40,
+    marginTop: 20,
+  },
+  buttonText: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "bold",
   },
 });

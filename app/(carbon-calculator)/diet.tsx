@@ -1,61 +1,53 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  Header,
-  RadioButtonGroup,
-  NextButton,
-} from "@/components/carbon-calculator";
+import { Header, RadioButtonGroup, NextButton } from "@/components/carbon-calculator";
 import { useEmissions } from "@/contexts";
+import { calculateEmissions } from "@/api/emissions"; // Adjust the import path as needed
 
 export default function DietCalculator() {
-  const { transportationData, dietData, updateDietData, updateTotalData } =
-    useEmissions();
+  const { transportationData, dietData, updateDietData, updateTotalData } = useEmissions();
 
   const [diet, setDiet] = useState(dietData.diet || "Average");
-  const [dietEmissions, setDietEmissions] = useState(
-    dietData.dietEmissions || 0.0
-  );
-  const transportationEmissions =
-    transportationData.transportationEmissions || 0;
+  const [dietEmissions, setDietEmissions] = useState(dietData.dietEmissions || 0.0);
+  const transportationEmissions = transportationData.transportationEmissions || 0;
   const [isFormValid, setIsFormValid] = useState(false);
   const [progress, setProgress] = useState(0.33);
 
   useEffect(() => {
     setIsFormValid(diet !== "");
 
-    switch (diet) {
-      case "Meat Lover":
-        setDietEmissions(3.3);
-        break;
-      case "Average":
-        setDietEmissions(2.5);
-        break;
-      case "No Beef Or Lamb":
-        setDietEmissions(1.9);
-        break;
-      case "Veterinarian":
-        setDietEmissions(1.7);
-        break;
-      case "Vegan":
-        setDietEmissions(1.5);
-        break;
-      default:
-        setDietEmissions(0.0);
-    }
+    // Create a new object with the current diet and other necessary data
+    const emissionsData = {
+      transportationData,
+      dietData: { diet, dietEmissions },
+      energyData: {}, // Placeholder for now
+      totalData: {
+        transportationEmissions,
+        dietEmissions: 0, // This will be updated
+        energyEmissions: 0, // Placeholder for now
+        totalEmissions: 0, // This will be updated
+      },
+    };
 
-    updateDietData({ diet, dietEmissions });
-    updateTotalData({
-      dietEmissions: dietEmissions,
-    });
+    // Calculate the emissions using the calculateEmissions function
+    const updatedTotalData = calculateEmissions(emissionsData);
 
+    // Update the state with the calculated diet emissions
+    setDietEmissions(updatedTotalData.dietEmissions);
+
+    // Update context data with the new values
+    updateDietData({ diet, dietEmissions: updatedTotalData.dietEmissions });
+    updateTotalData(updatedTotalData);
+
+    // Update progress based on diet selection
     if (diet !== "") {
       setProgress(0.66);
     } else {
       setProgress(0.33);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [diet, dietEmissions]);
+  }, [diet]);
 
   return (
     <ScrollView contentContainerStyle={styles.scrollView}>
@@ -67,13 +59,7 @@ export default function DietCalculator() {
           {/* Diet Selection */}
           <RadioButtonGroup
             question="Select your Diet"
-            options={[
-              "Meat Lover",
-              "Average",
-              "No Beef Or Lamb",
-              "Veterinarian",
-              "Vegan",
-            ]}
+            options={["Meat Lover", "Average", "No Beef Or Lamb", "Veterinarian", "Vegan"]}
             value={diet}
             onChange={(selectedDiet: string) => {
               setDiet(selectedDiet);
@@ -83,26 +69,18 @@ export default function DietCalculator() {
 
           {/* Emissions Display */}
           <View style={styles.emissionsContainer}>
-            <Text style={styles.emissionsTitle}>
-              Your Estimated Individual Diet Emissions
-            </Text>
+            <Text style={styles.emissionsTitle}>Your Estimated Individual Diet Emissions</Text>
             <View style={styles.emissionRow}>
               <Text style={styles.emissionLabel}>Transportation Emissions</Text>
-              <Text style={styles.emissionValue}>
-                {transportationEmissions.toFixed(2)}
-              </Text>
+              <Text style={styles.emissionValue}>{transportationEmissions.toFixed(2)}</Text>
             </View>
             <View style={styles.emissionRow}>
               <Text style={styles.emissionLabel}>Diet Emissions</Text>
-              <Text style={styles.emissionValue}>
-                {dietEmissions.toFixed(2)}
-              </Text>
+              <Text style={styles.emissionValue}>{dietEmissions.toFixed(2)}</Text>
             </View>
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.totalValue}>
-                {(transportationEmissions + dietEmissions).toFixed(2)}
-              </Text>
+              <Text style={styles.totalValue}>{(transportationEmissions + dietEmissions).toFixed(2)}</Text>
               <Text style={styles.totalUnit}>tons of CO2 per year</Text>
             </View>
           </View>
@@ -118,6 +96,7 @@ export default function DietCalculator() {
 const styles = StyleSheet.create({
   scrollView: {
     flexGrow: 1,
+    backgroundColor: "#fff",
   },
   contentContainer: {
     paddingHorizontal: 48,

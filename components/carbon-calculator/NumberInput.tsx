@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { Text } from "react-native";
+import { Text, StyleSheet } from "react-native";
 import { TextInput, HelperText } from "react-native-paper";
 
 const NumberInput = ({
@@ -21,7 +21,7 @@ const NumberInput = ({
 
   return (
     <>
-      <Text className="mt-6 text-xl">{question}</Text>
+      <Text style={styles.question}>{question}</Text>
       <TextInput
         ref={inputRef}
         placeholder="Your Answer"
@@ -29,28 +29,18 @@ const NumberInput = ({
         onChangeText={onChange}
         keyboardType="numeric"
         mode="outlined"
-        outlineStyle={{
-          borderWidth: 0,
-        }}
-        style={{
-          backgroundColor: "#fff",
-          width: "100%",
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 1.41,
-          borderRadius: 8,
-          marginTop: 16,
-        }}
+        outlineStyle={styles.outlineStyle}
+        outlineColor="#D9D9D9"
+        style={styles.input}
         textColor="#000"
         right={
           label ? (
-            <TextInput.Affix text={label} textStyle={{ color: "#000" }} />
+            <TextInput.Affix text={label} textStyle={styles.affixText} />
           ) : null
         }
         left={
           unit ? (
-            <TextInput.Affix text={unit} textStyle={{ color: "#000" }} />
+            <TextInput.Affix text={unit} textStyle={styles.affixText} />
           ) : null
         }
       />
@@ -60,5 +50,24 @@ const NumberInput = ({
     </>
   );
 };
+
+const styles = StyleSheet.create({
+  question: {
+    marginTop: 24,
+    fontSize: 20,
+  },
+  input: {
+    backgroundColor: "#fff",
+    width: "100%",
+    marginTop: 16,
+  },
+  outlineStyle: {
+    borderWidth: 1,
+    borderRadius: 10,
+  },
+  affixText: {
+    color: "#000",
+  },
+});
 
 export default NumberInput;
